@@ -1,0 +1,68 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "command": "cmake",
+    "showOutput": "always",
+    "isShellCommand": true,
+    "suppressTaskName": true,
+    "echoCommand": true,
+    "tasks": [
+        {
+            "taskName": "cmake",
+            "args": [
+                "CMakeLists.txt"
+            ],
+            "isBuildCommand": true
+        },
+        {
+            "taskName": "编译",
+            "args": [
+                "-c",
+                "-g",
+                "-std=c++11",
+                "-pthread",
+                "-o${fileBasenameNoExtension}.o",
+                "${fileBasename}"
+            ],
+            "isBuildCommand": false
+        },
+        {
+            "taskName": "链接",
+            "args": [
+                "-c",
+                "-otest.out",
+                "redis.test.cpp"
+            ],
+            "isBuildCommand": false,
+            "isTestCommand": false
+        },
+        {
+            "taskName": "发布",
+            "args": [
+                "-c",
+                "-otest.out",
+                "redis.test.cpp"
+            ],
+            "isBuildCommand": false,
+            "isTestCommand": false
+        },
+        {
+            "taskName": "输出",
+            "args": [
+                "${workspaceRoot}", // /home/ms/object_redis
+                "${workspaceRootFolderName}", // object_redis
+                "${file}", // /home/ms/object_redis/.vscode/tasks.json
+                "${relativeFile}", // .vscode/tasks.json
+                "${fileBasename}", // tasks.json
+                "${fileBasenameNoExtension}", // tasks
+                "${fileDirname}", // /home/ms/object_redis/.vscode
+                "${fileExtname}", // .json
+                "${cwd}", // /home/ms/object_redis
+                "${lineNumber}" // 42
+            ],
+            "isBuildCommand": false,
+            "isTestCommand": false
+        }
+    ]
+}
