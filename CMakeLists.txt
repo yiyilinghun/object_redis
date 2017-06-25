@@ -6,9 +6,16 @@ aux_source_directory(. base_dir_srcs)
 add_executable(redis_test.out ${base_dir_srcs})
 
 if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
+    message(STATUS "增加线程库引用")   
+
     set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
     message(STATUS "c++版本11")   
+
     set(CMAKE_CXX_FLAGS "-g ${CMAKE_CXX_FLAGS}")
-    message(STATUS "具有调试信息")   
+    message(STATUS "具有调试信息")
+
+    #set(CMAKE_CXX_FLAGS "-O1 ${CMAKE_CXX_FLAGS}")
+    #message(STATUS "具有一级优化(O1)")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 

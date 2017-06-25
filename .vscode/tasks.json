@@ -9,13 +9,6 @@
     "echoCommand": true,
     "tasks": [
         {
-            "taskName": "cmake",
-            "args": [
-                "CMakeLists.txt"
-            ],
-            "isBuildCommand": true
-        },
-        {
             "taskName": "编译",
             "args": [
                 "-c",
