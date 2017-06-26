@@ -3,8 +3,22 @@
   <ItemGroup>
     <ClCompile Include="redis_test.cpp" />
     <ClCompile Include="redis_test_cmake.cpp" />
+    <ClCompile Include="redis\credis.c">
+      <Filter>redis</Filter>
+    </ClCompile>
+    <ClCompile Include="redis\credis-test.c">
+      <Filter>redis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="redis_test_cmake.h" />
+    <ClInclude Include="redis\credis.h">
+      <Filter>redis</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="redis">
+      <UniqueIdentifier>{2f599557-a119-49e3-84f0-8dd7beab832f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
