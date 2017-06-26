@@ -1,9 +1,7 @@
 ﻿#include "redis_mgr.h"
 
 msRedisMgr::msRedisMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTimeout)
-    : m_Host(xHost)
-    , m_Port(xPort)
-    , m_Redis(credis_connect(xHost, xPort, xTimeout))
+    : m_Host(xHost), m_Port(xPort), m_Redis(credis_connect(xHost, xPort, xTimeout))
 {
     if (m_Redis)
     {
@@ -13,7 +11,7 @@ msRedisMgr::msRedisMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTi
     }
     else
     {
-        Char* szBuff = ALLOCA_CH(200);
+        Char *szBuff = ALLOCA_CH(200);
         msAssertLog(szBuff, "连接Redis[%s:%d(%d)]失败!", m_Host.c_str(), m_Port, m_DBIndex);
         throw szBuff;
     }
@@ -29,7 +27,7 @@ Boolean msRedisMgr::SelectDB(Int32 xDBIndex)
 {
     if (m_DBIndex == xDBIndex)
     {
-        msAssertLog("Redis数据库已经在[%s:%d(%d)]!", m_Host.c_str(), m_Port, m_DBIndex);
+        msAssertLog("正在使用Redis[%d]号数据库[%s:%d]!", m_DBIndex, m_Host.c_str(), m_Port);
     }
     else
     {
@@ -37,14 +35,13 @@ Boolean msRedisMgr::SelectDB(Int32 xDBIndex)
         if (m_RedisCode == 0)
         {
             m_DBIndex = xDBIndex;
-            msAssertLog("使用Redis[%s:%d(%d)]数据库!", m_Host.c_str(), m_Port, m_DBIndex);
+            msAssertLog("开始使用Redis[%d]号数据库[%s:%d]!", m_DBIndex, m_Host.c_str(), m_Port);
         }
         else
         {
-            msAssertLog("切换到Redis数据库[%s:%d(%d)]失败[%d]!", m_Host.c_str(), m_Port, m_DBIndex, m_RedisCode);
+            msAssertLog("切换到Redis[%d]号数据库失败[%s:%d][%d]!", xDBIndex, m_Host.c_str(), m_Port, m_RedisCode);
         }
     }
-
 
     return True;
     //if ()

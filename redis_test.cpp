@@ -6,6 +6,13 @@
 int main(int argc, char **argv)
 {
     msRedisMgr xRedisMgr("192.168.4.161", 6379, 0, 10000);
+
+    xRedisMgr.SelectDB(0);
+    xRedisMgr.SelectDB(1);
+    xRedisMgr.SelectDB(2);
+    xRedisMgr.SelectDB(3);
+    xRedisMgr.SelectDB(4);
+    xRedisMgr.SelectDB(100);
     //say_hello();
 
     //auto f1 = std::async(std::launch::async, []() {
