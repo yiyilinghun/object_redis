@@ -7,12 +7,12 @@ msRedisMgr::msRedisMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTi
     if (m_Redis)
     {
         m_RedisCode = credis_info(m_Redis, &m_RedisInfo);
-        printf("连接Redis[%s:%d(%d)]成功!", xHost, xPort, m_DBIndex);
+        printf("连接Redis[%s:%d(%d)]成功!\n", xHost, xPort, m_DBIndex);
     }
     else
     {
         Char* szBuff = ALLOCA_CH(200);
-        sprintf(szBuff, "连接Redis[%s:%d(%d)]失败!", xHost, xPort, m_DBIndex);
+        sprintf(szBuff, "连接Redis[%s:%d(%d)]失败!\n", xHost, xPort, m_DBIndex);
         printf(szBuff);
         throw szBuff;
     }

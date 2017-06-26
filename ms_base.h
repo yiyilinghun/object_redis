@@ -9,8 +9,13 @@ typedef unsigned short      Unt16;
 typedef signed int          Int32;
 typedef unsigned int        Unt32;
 
+#ifdef WIN
 typedef signed __int64      Int64;
 typedef unsigned __int64    Unt64;
+#else
+typedef signed long long    Int64;  
+typedef unsigned long long  Unt64;
+#endif
 
 typedef Int32               Boolean;
 #define True                1
