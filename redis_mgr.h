@@ -5,12 +5,14 @@
 class msRedisMgr
 {
 public:
-    msRedisMgr(const Char *xHost = "127.0.0.1", Int32 xPort = 6379, Int32 xDBIndex = 0, Int32 xTimeout = 10000);
+    msRedisMgr(const Char *xHost = "127.0.0.1", Int32 xPort = 6379, Int32 xDBIndex = 0, Int32 xTimeout = 10000, const Char *xPassword = nullptr);
     ~msRedisMgr();
 
     Boolean SelectDB(Int32 xDBIndex = 0);
+    Int32 GetSize(mstr xKey);
 protected:
 private:
+    Boolean LoginAuth(const Char *password);
 
     // Redis 连接
     REDIS m_Redis = nullptr;
