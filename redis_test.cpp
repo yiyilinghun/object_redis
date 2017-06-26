@@ -8,7 +8,8 @@ int main(int argc, char **argv)
 
     auto f1 = std::async(std::launch::async, []() {
         say_hello();
-        return pthread_self();
+        //return pthread_self();
+        return 1;
     });
 
     printf("%lu\n", f1.get());
