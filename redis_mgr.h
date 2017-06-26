@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include "redis/credis.h"
 #include "ms_base.h"
 
@@ -11,13 +11,13 @@ public:
 protected:
 private:
 
-    // Redis Á¬½Ó
+    // Redis è¿æ¥
     REDIS m_Redis = nullptr;
 
-    // Redis ĞÅÏ¢
+    // Redis ä¿¡æ¯
     REDIS_INFO m_RedisInfo;
 
-    // Redis ·µ»ØÂë
+    // Redis è¿”å›ç 
     Int32 m_RedisCode;
 
     //char *val, **valv, lstr[50000];

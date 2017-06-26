@@ -1,4 +1,4 @@
-/* credis.h -- a C client library for Redis, public API.
+﻿/* credis.h -- a C client library for Redis, public API.
  *
  * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>
  * All rights reserved.

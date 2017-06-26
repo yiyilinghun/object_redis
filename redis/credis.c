@@ -1,4 +1,4 @@
-/* credis.c -- a C client library for Redis
+﻿/* credis.c -- a C client library for Redis
  *
  * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>
  * All rights reserved.

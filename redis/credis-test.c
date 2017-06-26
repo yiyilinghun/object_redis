@@ -1,4 +1,4 @@
-///* credis-test.c -- a sample test application using credis (C client library
+﻿///* credis-test.c -- a sample test application using credis (C client library
 // * for Redis)
 // *
 // * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>

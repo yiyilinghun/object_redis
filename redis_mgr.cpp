@@ -1,4 +1,4 @@
-#include "redis_mgr.h"
+﻿#include "redis_mgr.h"
 
 msRedisMgr::msRedisMgr(const Char *host, Int32 port, Int32 timeout)
     : m_Redis(credis_connect(host, port, timeout))
