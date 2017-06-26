@@ -28,3 +28,5 @@ typedef void*               IntPtr;
 typedef std::wstring    wstr;
 typedef std::string     mstr;
 typedef std::string     u8str;
+
+#define ALLOCA_CH(size) (Char*)alloca(size)
