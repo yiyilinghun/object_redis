@@ -5,6 +5,7 @@ project(redis_test VERSION 0.0.1)
 message(STATUS "项目[redis_test](0.0.1)")
 
 aux_source_directory(. base_dir_srcs)
+aux_source_directory(./redis base_dir_srcs)
 
 add_executable(redis_test.out ${base_dir_srcs})
 message(STATUS "输出文件(redis_test.out)")

@@ -1,17 +1,27 @@
-#include <iostream>
+﻿#include <iostream>
 #include <future>
-#include "redis_test_cmake.h"
+
+#include "redis_mgr.h"
 
 int main(int argc, char **argv)
 {
-    say_hello();
+    msRedisMgr xRedisMgr("192.168.4.161", 6379, 0, 10000);
 
-    auto f1 = std::async(std::launch::async, []() {
-        say_hello();
-        return pthread_self();
-    });
+    xRedisMgr.SelectDB(0);
+    xRedisMgr.SelectDB(1);
+    xRedisMgr.SelectDB(2);
+    xRedisMgr.SelectDB(3);
+    xRedisMgr.SelectDB(4);
+    xRedisMgr.SelectDB(100);
+    //say_hello();
 
-    printf("%lu\n", f1.get());
+    //auto f1 = std::async(std::launch::async, []() {
+    //    say_hello();
+    //    //return pthread_self();
+    //    return 1;
+    //});
+
+    //printf("%d\n", f1.get());
 
     char x;
     int xRet = scanf("%c", &x);
