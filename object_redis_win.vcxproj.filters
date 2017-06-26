@@ -2,19 +2,20 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="redis_test.cpp" />
-    <ClCompile Include="redis_test_cmake.cpp" />
     <ClCompile Include="redis\credis.c">
       <Filter>redis</Filter>
     </ClCompile>
     <ClCompile Include="redis\credis-test.c">
       <Filter>redis</Filter>
     </ClCompile>
+    <ClCompile Include="redis_mgr.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="redis_test_cmake.h" />
     <ClInclude Include="redis\credis.h">
       <Filter>redis</Filter>
     </ClInclude>
+    <ClInclude Include="redis_mgr.h" />
+    <ClInclude Include="ms_base.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="redis">

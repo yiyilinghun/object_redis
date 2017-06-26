@@ -661,7 +661,11 @@ void credis_close(REDIS rhnd)
 
 REDIS credis_connect(const char *host, int port, int timeout)
 {
+#ifdef WIN
+    int fd, yes = 1, use_he = 0;
+#else
     int fd, rc, flags, yes = 1, use_he = 0;
+#endif
     struct sockaddr_in sa;
     struct hostent *he;
     REDIS rhnd;

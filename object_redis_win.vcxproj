@@ -150,11 +150,12 @@
     <ClCompile Include="redis\credis-test.c" />
     <ClCompile Include="redis\credis.c" />
     <ClCompile Include="redis_test.cpp" />
-    <ClCompile Include="redis_test_cmake.cpp" />
+    <ClCompile Include="redis_mgr.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ms_base.h" />
     <ClInclude Include="redis\credis.h" />
-    <ClInclude Include="redis_test_cmake.h" />
+    <ClInclude Include="redis_mgr.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
