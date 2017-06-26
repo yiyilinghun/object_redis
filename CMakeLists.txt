@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0.0)
 project(redis_test VERSION 0.0.1)
 
 aux_source_directory(. base_dir_srcs)
+aux_source_directory(./redis base_dir_srcs)
 
 add_executable(redis_test.out ${base_dir_srcs})
 
