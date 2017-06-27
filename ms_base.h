@@ -8,6 +8,7 @@
 #include <ratio>
 #include <chrono>
 #include <iomanip>
+#include <vector>
 
 #include <stdarg.h>
 
@@ -59,7 +60,7 @@ typedef std::string u8str;
 #define INVALID_DVALUE      (DWORD)(-1)
 #define INVALID_PTR         (IntPtr)(-1)
 
-#define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, __VA_ARGS__)))
+#define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, ##__VA_ARGS__)))
 void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...);
 
 class msStrAssist
@@ -121,7 +122,7 @@ public:
         T xT;
         if (xStr.size() == sizeof(xT))
         {
-            xT = *((T*)(xBuff.data()));
+            xT = *((T*)(xStr.data()));
         }
         return xT;
     }
@@ -131,7 +132,7 @@ public:
     {
         if (xStr.size() == sizeof(xT))
         {
-            xT = *((T*)(xBuff.data()));
+            xT = *((T*)(xStr.data()));
         }
     }
 };

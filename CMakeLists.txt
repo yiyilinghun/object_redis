@@ -16,7 +16,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-g ${CMAKE_CXX_FLAGS}")
     message(STATUS "具有调试信息")
 
-    #set(CMAKE_CXX_FLAGS "-O1 ${CMAKE_CXX_FLAGS}")
-    #message(STATUS "具有一级优化(O1)")
+    set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+    message(STATUS "具有一级优化(O2)")
+    
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
