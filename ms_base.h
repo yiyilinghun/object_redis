@@ -1,4 +1,10 @@
-﻿#include <iostream>
+﻿#ifndef __MS_BASE_H__
+#define __MS_BASE_H__
+
+#include <codecvt>
+#include <string>
+#include <iostream>
+#include <future>
 #include <ratio>
 #include <chrono>
 #include <iomanip>
@@ -55,3 +61,109 @@ typedef std::string u8str;
 
 #define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, __VA_ARGS__)))
 void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...);
+
+class msStrAssist
+{
+public:
+    static mstr format(const char *xFormat, ...)
+    {
+        mstr xBuff;
+        xBuff.resize(1024 * 10);
+        va_list ap;
+        va_start(ap, xFormat);
+        int xRealLen = vsprintf((char*)xBuff.data(), xFormat, ap);
+        xBuff.resize(xRealLen);
+        va_end(ap);
+        return xBuff;
+    }
+
+    static mstr m2u8(mstr& xMstr)
+    {
+        //if (std::codecvt_base::ok == res)
+        //{
+        //    std::wstring_convert<std::codecvt_utf8<char>> cutf8;
+        //    return cutf8.to_bytes(std::wstring(buff.data(), pwszNext));
+        //}
+        //std::codecvt_utf8
+        //mstr xBuff;
+        //xBuff.resize(sizeof(xT));
+        //*((T*)(xBuff.data())) = xT;
+        return xMstr;
+    }
+
+    static mstr u82m(mstr& xU8str)
+    {
+        //mstr xBuff;
+        //xBuff.resize(sizeof(xT));
+        //*((T*)(xBuff.data())) = xT;
+        return xU8str;
+    }
+
+    template <typename T>
+    static mstr CreateStringByType(T& xT)
+    {
+        mstr xBuff;
+        xBuff.resize(sizeof(xT));
+        *((T*)(xBuff.data())) = xT;
+        return xBuff;
+    }
+
+    template <typename T>
+    static void CreateStringByType(mstr& xStr, T& xT)
+    {
+        xStr.resize(sizeof(xT));
+        *((T*)(xStr.data())) = xT;
+    }
+
+    template <typename T>
+    static T CreateTypeByString(mstr& xStr)
+    {
+        T xT;
+        if (xStr.size() == sizeof(xT))
+        {
+            xT = *((T*)(xBuff.data()));
+        }
+        return xT;
+    }
+
+    template <typename T>
+    static void CreateTypeByString(T& xT, mstr& xStr)
+    {
+        if (xStr.size() == sizeof(xT))
+        {
+            xT = *((T*)(xBuff.data()));
+        }
+    }
+};
+
+class msTimer
+{
+public:
+    msTimer() { reset(); }
+
+    void reset() { m_Begin = std::chrono::high_resolution_clock::now(); }
+
+    // 默认输出毫秒
+    template<typename Duration = std::chrono::milliseconds>
+    Int64 elapsed()const { return std::chrono::duration_cast<Duration>(std::chrono::high_resolution_clock::now() - m_Begin).count(); }
+
+    // 微妙
+    Int64 elapsed_micro()const { return elapsed<std::chrono::microseconds>(); }
+
+    // 纳秒
+    Int64 elapsed_nano()const { return elapsed<std::chrono::nanoseconds>(); }
+
+    // 秒
+    Int64 elapsed_seconds()const { return elapsed<std::chrono::seconds>(); }
+
+    // 分
+    Int64 elapsed_minutes()const { return elapsed<std::chrono::minutes>(); }
+
+    // 时
+    Int64 elapsed_hours()const { return elapsed<std::chrono::hours>(); }
+
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_Begin;
+};
+
+#endif  // __MS_BASE_H__

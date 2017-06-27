@@ -93,3 +93,46 @@ Int32 msRedisMgr::GetSize(mstr xKey)
 {
     return credis_llen(m_Redis, xKey.c_str());
 }
+
+Int32 msRedisMgr::HashSetList(mstr xHashName, msRedisMulKV& xKVs)
+{
+    return HashSetList(xHashName, xKVs.m_Keys, xKVs.m_Values);
+}
+
+Int32 msRedisMgr::HashSetList(mstr xHashName, std::vector<mstr>& xKeys, std::vector<mstr>& xValues)
+{
+    mstr xBuff = msStrAssist::format("HMSET %s", xHashName.c_str());
+    if (xKeys.size() != xValues.size())
+    {
+        msAssertLog("xKeys.size() != xValues.size()");
+        return -1;
+    }
+    for (int i = 0; i < xKeys.size(); i++)
+    {
+        xBuff += " " + xKeys[i];
+        xBuff += R"( ")" + xValues[i] + R"(")";
+    }
+
+    xBuff += "\r\n";
+    return credis_send(m_Redis, CR_INLINE, xBuff.c_str());
+
+}
+
+Int32 msRedisMgr::HashSet(mstr xHashName, mstr xKey, mstr xValue)
+{
+    return credis_hset(m_Redis, xHashName.c_str(), xKey.c_str(), xValue.c_str());
+}
+
+Boolean msRedisMgr::HashGet(mstr xHashName, mstr xKey, mstr &xValue)
+{
+    char* pValue;
+    if (credis_hget(m_Redis, xHashName.c_str(), xKey.c_str(), &pValue) >= 0)
+    {
+        xValue = pValue;
+        return True;
+    }
+    else
+    {
+        return False;
+    }
+}
