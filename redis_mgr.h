@@ -31,15 +31,5 @@ private:
 
     // Redis DBIndex
     Int32 m_DBIndex = INVALID_NID;
-
-    //char *val, **valv, lstr[50000];
-    //const char *keyv[] = { "kalle", "adam", "unknown", "bertil", "none" };
-    //int rc, keyc = 5, i;
-    //double score1, score2;
-
-    //redis = credis_connect("192.168.4.161", 6379, 10000);
-    //if (redis == NULL) {
-    //    printf("Error connecting to Redis server. Please start server to run tests.\n");
-    //    exit(1);
-    //}
 };
+

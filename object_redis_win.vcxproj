@@ -147,12 +147,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="logic_test_mgr.cpp" />
+    <ClCompile Include="ms_base.cpp" />
     <ClCompile Include="redis\credis-test.c" />
     <ClCompile Include="redis\credis.c" />
     <ClCompile Include="redis_test.cpp" />
     <ClCompile Include="redis_mgr.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="logic_test_mgr.h" />
     <ClInclude Include="ms_base.h" />
     <ClInclude Include="redis\credis.h" />
     <ClInclude Include="redis_mgr.h" />
