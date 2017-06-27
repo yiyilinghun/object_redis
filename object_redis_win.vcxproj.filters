@@ -9,6 +9,8 @@
       <Filter>redis</Filter>
     </ClCompile>
     <ClCompile Include="redis_mgr.cpp" />
+    <ClCompile Include="logic_test_mgr.cpp" />
+    <ClCompile Include="ms_base.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="redis\credis.h">
@@ -16,6 +18,7 @@
     </ClInclude>
     <ClInclude Include="redis_mgr.h" />
     <ClInclude Include="ms_base.h" />
+    <ClInclude Include="logic_test_mgr.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="redis">

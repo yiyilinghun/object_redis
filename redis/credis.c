@@ -59,15 +59,9 @@ void close(int fd) {
 }
 #endif
 
-#define CR_ERROR '-'
-#define CR_INLINE '+'
-#define CR_BULK '$'
-#define CR_MULTIBULK '*'
-#define CR_INT ':'
-
-#define CR_BUFFER_SIZE 4096
+#define CR_BUFFER_SIZE 40960
 #define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE)/10+1)
-#define CR_MULTIBULK_SIZE 256
+#define CR_MULTIBULK_SIZE 2560
 
 #define _STRINGIF(arg) #arg
 #define STRINGIFY(arg) _STRINGIF(arg)
@@ -611,6 +605,21 @@ static int cr_sendandreceive(REDIS rhnd, char recvtype)
 
     return cr_receivereply(rhnd, recvtype);
 }
+
+
+/* Prepare message buffer for sending using a printf()-style. */
+int credis_send(REDIS rhnd, char recvtype, const char *command)
+{
+    int rc = (int)strlen(command);
+    cr_buffer *buf = &(rhnd->buf);
+
+    strcpy(buf->data, command);
+
+    buf->len = rc;
+
+    return cr_sendandreceive(rhnd, recvtype);
+}
+
 
 /* Prepare message buffer for sending using a printf()-style formatting. */
 __attribute__((format(printf, 3, 4)))
@@ -1549,4 +1558,40 @@ int credis_zunionstore(REDIS rhnd, const char *destkey, int keyc, const char **k
     const int *weightv, REDIS_AGGREGATE aggregate)
 {
     return cr_zstore(rhnd, 0, destkey, keyc, keyv, weightv, aggregate);
+}
+
+int credis_hset(REDIS rhnd, const char *name, const char *key, const char *val)
+{
+    return cr_sendfandreceive(rhnd, CR_INLINE, "HSET %s %s %s\r\n",
+        name, key, val);
+}
+
+int credis_hget(REDIS rhnd, const char *name, const char *key, char **val)
+{
+    int rc = cr_sendfandreceive(rhnd, CR_BULK, "HGET %s %s\r\n", name, key);
+
+    if (rc == 0 && (*val = rhnd->reply.bulk) == NULL)
+        return -1;
+
+    return rc;
+}
+
+int credis_hdel(REDIS rhnd, const char *name, const char *key)
+{
+    int rc = cr_sendfandreceive(rhnd, CR_INT, "HDEL %s %s\r\n", name, key);
+
+    if (rc == 0)
+        rc = rhnd->reply.integer;
+
+    return rc;
+}
+
+int credis_hlen(REDIS rhnd, const char *name)
+{
+    int rc = cr_sendfandreceive(rhnd, CR_INT, "HLEN %s\r\n", name);
+
+    if (rc == 0)
+        rc = rhnd->reply.integer;
+
+    return rc;
 }

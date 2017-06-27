@@ -1,7 +1,14 @@
-﻿#include <iostream>
+﻿#ifndef __MS_BASE_H__
+#define __MS_BASE_H__
+
+#include <codecvt>
+#include <string>
+#include <iostream>
+#include <future>
 #include <ratio>
 #include <chrono>
 #include <iomanip>
+#include <vector>
 
 #include <stdarg.h>
 
@@ -42,73 +49,122 @@ typedef std::string u8str;
 #define ALLOCA_CH(size) (Char *)alloca(size)
 
 //无效的ID值
-#define INVALID_LID (Int64) - 1
-#define INVALID_QID (QWORD) - 1
-#define INVALID_NID -1
-#define INVALID_UID (DWORD) - 1
-#define INVALID_WID (WORD) - 1
-#define INVALID_BID (Byte) - 1
-#define INVALID_KEY (LPVOID) - 1
-#define INVALID_VALUE (-1)
-#define INVALID_DVALUE (DWORD)(-1)
-#define INVALID_PTR (IntPtr)(-1)
+#define INVALID_LID         (Int64)(-1)
+#define INVALID_QID         (QWORD)(-1)
+#define INVALID_NID         (-1)
+#define INVALID_UID         (DWORD)(-1)
+#define INVALID_WID         (WORD)(-1)
+#define INVALID_BID         (Byte)(-1)
+#define INVALID_KEY         (LPVOID)(-1)
+#define INVALID_VALUE       (-1)
+#define INVALID_DVALUE      (DWORD)(-1)
+#define INVALID_PTR         (IntPtr)(-1)
 
-#define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, __VA_ARGS__)))
-inline void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...)
+#define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, ##__VA_ARGS__)))
+void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...);
+
+class msStrAssist
 {
-    std::time_t xNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    struct tm *tmTime = std::localtime(&xNow);
-    //std::cout << std::put_time(std::localtime(&xNow), "%F %R") << std::endl;
-    //struct tm *tmTime = gmtime(&xNow);
+public:
+    static mstr format(const char *xFormat, ...)
+    {
+        mstr xBuff;
+        xBuff.resize(1024 * 10);
+        va_list ap;
+        va_start(ap, xFormat);
+        int xRealLen = vsprintf((char*)xBuff.data(), xFormat, ap);
+        xBuff.resize(xRealLen);
+        va_end(ap);
+        return xBuff;
+    }
 
-    Char szBuff[1024];
-    sprintf(szBuff,
-            "\n"
-            "time:[%02d-%02d-%02d %02d:%02d:%02d]file:[%s(%d)] func:[%s(%s)]"
-            "\n"
-            "info:[%s]"
-            "\n",
-            1900 + tmTime->tm_year, tmTime->tm_mon + 1, tmTime->tm_mday, tmTime->tm_hour, tmTime->tm_min, tmTime->tm_sec,
-            file, line, func, expr, info);
+    static mstr m2u8(mstr& xMstr)
+    {
+        //if (std::codecvt_base::ok == res)
+        //{
+        //    std::wstring_convert<std::codecvt_utf8<char>> cutf8;
+        //    return cutf8.to_bytes(std::wstring(buff.data(), pwszNext));
+        //}
+        //std::codecvt_utf8
+        //mstr xBuff;
+        //xBuff.resize(sizeof(xT));
+        //*((T*)(xBuff.data())) = xT;
+        return xMstr;
+    }
 
-    va_list ap;
-    va_start(ap, info);
-    mstr xLogBuff;
-    xLogBuff.resize(4096);
-    vsprintf((Char *)xLogBuff.data(), szBuff, ap);
-    va_end(ap);
-    std::cout << xLogBuff.data();
+    static mstr u82m(mstr& xU8str)
+    {
+        //mstr xBuff;
+        //xBuff.resize(sizeof(xT));
+        //*((T*)(xBuff.data())) = xT;
+        return xU8str;
+    }
 
-    //Char* szBuff = ALLOCA_CH(200);
-    //sprintf(szBuff, "连接Redis[%s:%d(%d)]失败!\n", xHost, xPort, m_DBIndex);
+    template <typename T>
+    static mstr CreateStringByType(T& xT)
+    {
+        mstr xBuff;
+        xBuff.resize(sizeof(xT));
+        *((T*)(xBuff.data())) = xT;
+        return xBuff;
+    }
 
-    //SYSTEMTIME st;
-    //CURRENT_LOCALTIME(st);
-    //CHAR szBaseFormat[ASSERTX_STR_MAX_LEN] = { 0 };
-    //CHAR szAsserMessage[ASSERTX_STR_MAX_LEN] = { 0 };
-    //_snprintf_s(szBaseFormat, sizeof(szBaseFormat),
-    //    "\n"
-    //    "time:[%02d-%02d-%02d %02d:%02d:%02d.%03d]file:[%s(%d)] func:[%s(%s)]"
-    //    "\n"
-    //    "info:[%s]"
-    //    "\n",
-    //    st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-    //    file, line, func, expr, info);
+    template <typename T>
+    static void CreateStringByType(mstr& xStr, T& xT)
+    {
+        xStr.resize(sizeof(xT));
+        *((T*)(xStr.data())) = xT;
+    }
 
-    //va_list ap;
-    //va_start(ap, info);
-    //vsprintf_s(szAsserMessage, szBaseFormat, ap);
-    //va_end(ap);
-    //AsserMessage(eLevel, szAsserMessage);
-    //if (eLevel > AL_SHOWMSG)
-    //{
-    //    try
-    //    {
-    //        throw(expr);
-    //    }
-    //    catch (...)
-    //    {
+    template <typename T>
+    static T CreateTypeByString(mstr& xStr)
+    {
+        T xT;
+        if (xStr.size() == sizeof(xT))
+        {
+            xT = *((T*)(xStr.data()));
+        }
+        return xT;
+    }
 
-    //    }
-    //}
-}
+    template <typename T>
+    static void CreateTypeByString(T& xT, mstr& xStr)
+    {
+        if (xStr.size() == sizeof(xT))
+        {
+            xT = *((T*)(xStr.data()));
+        }
+    }
+};
+
+class msTimer
+{
+public:
+    msTimer() { reset(); }
+
+    void reset() { m_Begin = std::chrono::high_resolution_clock::now(); }
+
+    // 默认输出毫秒
+    template<typename Duration = std::chrono::milliseconds>
+    Int64 elapsed()const { return std::chrono::duration_cast<Duration>(std::chrono::high_resolution_clock::now() - m_Begin).count(); }
+
+    // 微妙
+    Int64 elapsed_micro()const { return elapsed<std::chrono::microseconds>(); }
+
+    // 纳秒
+    Int64 elapsed_nano()const { return elapsed<std::chrono::nanoseconds>(); }
+
+    // 秒
+    Int64 elapsed_seconds()const { return elapsed<std::chrono::seconds>(); }
+
+    // 分
+    Int64 elapsed_minutes()const { return elapsed<std::chrono::minutes>(); }
+
+    // 时
+    Int64 elapsed_hours()const { return elapsed<std::chrono::hours>(); }
+
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_Begin;
+};
+
+#endif  // __MS_BASE_H__
