@@ -35,7 +35,7 @@ public:\
     }\
     virtual void OnInvoke()\
     {\
-        m_GuildMgr->m_TaskQueue.Put(this);\
+        m_GuildMgr->AddTask(this);\
     }\
     Boolean Do(msGuildMgr* xGuildMgr);\
 private:\
@@ -64,6 +64,7 @@ public:
     Boolean IsBusy();
     // 任务相关
 private:
+    void AddTask(msLPL*);
     SyncQueue<msLPL*> m_TaskQueue;
     SyncQueue<std::function<void(void)>> m_CompleteTaskQueue;
 protected:

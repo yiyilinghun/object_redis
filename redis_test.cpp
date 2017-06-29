@@ -21,11 +21,13 @@ int main(int argc, char **argv)
         //xRedisMgr.SelectDB(1);
         //msAssertLog("查询Redis[%s]长度为[%d]!", "tk_list_8", xRedisMgr.GetSize("tk_list_8"));
 
-        for (Int32 i = 0; i < 1000; i++)
+        for (Int32 i = 0; i < 10; i++)
         {
+            msAssertLog("%d->Ask", i);
             xGuildMgr.m_CreateGuild.Invoke(
-                [=]() { msAssertLog("OnSucceed"); }, // OnSucceed
-                [=]() { msAssertLog("Onfailed"); }  // Onfailed
+                [=]() { msAssertLog("%d->OnSucceed", i); }, // OnSucceed
+                [=]() { msAssertLog("%d->Onfailed", i); },  // Onfailed
+                std::to_string(i)
             );
         }
 

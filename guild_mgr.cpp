@@ -29,6 +29,12 @@ void msGuildMgr::Shutdown()
     m_TaskThread.join();
 }
 
+void msGuildMgr::AddTask(msLPL* xLPL)
+{
+    //msAssertLog("%s->Put", xLPL->m_Params.back()[0].c_str());
+    m_TaskQueue.Put(xLPL);
+}
+
 //Boolean msGuildMgr::SaveGuild()
 Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr* xGuildMgr)
 {
