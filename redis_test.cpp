@@ -1,12 +1,15 @@
 ﻿#include "redis_mgr.h"
-#include "logic_test_mgr.h"
+#include "guild_mgr.h"
 
 int main(int argc, char **argv)
 {
     try
     {
+        //int a = 0xF0F0F0F0;
+        //int b = 0x0F0F0F0F;
+        //int c = a^b;
         //msRedisMgr xRedisMgr("192.168.4.161", 6379, 0, 10000, "redis_pass");
-        msGuildMgr xGuildMgr("192.168.4.161", 6379, 0, 10000);
+        msGuildMgr xGuildMgr("192.168.4.161", 6379, 0, 10000, nullptr);
 
         //xRedisMgr.SelectDB(0);
         //xRedisMgr.SelectDB(1);
