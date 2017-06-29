@@ -3,7 +3,7 @@
 #include "ms_base.h"
 #include "redis_mgr.h"
 #include "logic_production_line.h"
-#include "squeue.hpp"
+#include "SyncQueue.hpp"
 
 //class CreateGuildLPL : msLPL
 //{
@@ -26,7 +26,7 @@
 class __class_name__ : public msLPL\
 {\
 public:\
-    __class_name__(msGuildMgr* xGuildMgr)\
+    __class_name__(msGuildMgr* xGuildMgr):m_GuildMgr(xGuildMgr)\
     {\
     }\
     virtual bool _Do()\
@@ -35,7 +35,7 @@ public:\
     }\
     virtual void OnInvoke()\
     {\
-        m_GuildMgr->m_TaskQueue.push(this);\
+        m_GuildMgr->m_TaskQueue.Put(this);\
     }\
     Boolean Do(msGuildMgr* xGuildMgr);\
 private:\
@@ -61,21 +61,21 @@ public:
     FASE_DEF_TASK_LPL(SaveGuild)            m_SaveGuild;            // 申请公会存盘
 
     void LogicCheckTick(Int32 xExeNum = 100);  // 逻辑线程处理
+    Boolean IsBusy();
+    // 任务相关
+private:
+    SyncQueue<msLPL*> m_TaskQueue;
+    SyncQueue<std::function<void(void)>> m_CompleteTaskQueue;
+protected:
+private:
+    Int64   m_GuildId;
+    mstr    m_GuildName;
+    Int64   m_CreateTime;
 
     // 线程相关
 private:
     Boolean m_StopTaskThread = False;
     std::thread m_TaskThread;
     void TaskThreadCB();   // 任务线程回调
-
-    // 任务相关
-private:
-    squeue<msLPL*> m_TaskQueue;
-    squeue<std::function<void(void)>> m_CompleteTaskQueue;
-protected:
-private:
-    Int64   m_GuildId;
-    mstr    m_GuildName;
-    Int64   m_CreateTime;
 };
 

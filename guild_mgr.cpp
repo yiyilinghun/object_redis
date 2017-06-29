@@ -38,7 +38,7 @@ Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr* xGuildMgr)
 
     xKVs.PushKV(u8"GuildName", xGuildMgr->m_GuildName);
     xKVs.PushKV(u8"CreateTime", std::to_string(xGuildMgr->m_CreateTime));
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 10; i++)
     {
         xKVs.PushKV(std::to_string(i), std::to_string(i*i));
     }
@@ -98,9 +98,13 @@ void msGuildMgr::LogicCheckTick(Int32 xExeNum)
     std::function<void(void)> xFun;
     for (Int32 i = 0; i < xExeNum; i++)
     {
-        if (m_CompleteTaskQueue.try_pop(xFun))
+        if (m_CompleteTaskQueue.Take(xFun))
         {
             xFun();
+        }
+        else
+        {
+            break;
         }
     }
 }
@@ -111,15 +115,15 @@ void msGuildMgr::TaskThreadCB()
     while (!m_StopTaskThread)
     {
         msLPL* xLpl = nullptr;
-        if (m_TaskQueue.try_pop(xLpl))
+        if (m_TaskQueue.Take(xLpl))
         {
             if (xLpl->_Do())
             {
-                m_CompleteTaskQueue.push(xLpl->m_OnSucceed.front());
+                m_CompleteTaskQueue.Put(xLpl->m_OnSucceed.front());
             }
             else
             {
-                m_CompleteTaskQueue.push(xLpl->m_Onfailed.front());
+                m_CompleteTaskQueue.Put(xLpl->m_Onfailed.front());
             }
             xLpl->m_OnSucceed.pop();
             xLpl->m_Onfailed.pop();
@@ -129,7 +133,11 @@ void msGuildMgr::TaskThreadCB()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-        msAssertLog("TaskThreadTick");
     }
 }
 
+
+Boolean msGuildMgr::IsBusy()
+{
+    return m_TaskQueue.Count() > 0 || m_CompleteTaskQueue.Count() > 0;
+}

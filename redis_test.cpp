@@ -24,12 +24,17 @@ int main(int argc, char **argv)
         for (Int32 i = 0; i < 1000; i++)
         {
             xGuildMgr.m_CreateGuild.Invoke(
-                [=]() {; }, // OnSucceed
-                [=]() {; }  // Onfailed
+                [=]() { msAssertLog("OnSucceed"); }, // OnSucceed
+                [=]() { msAssertLog("Onfailed"); }  // Onfailed
             );
+        }
 
+        while (xGuildMgr.IsBusy())
+        {
             xGuildMgr.LogicCheckTick();
         }
+
+
         msTimer xTimer;
 
 

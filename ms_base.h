@@ -12,7 +12,9 @@
 #include <functional>
 #include <list>
 #include <queue>
-
+#include <mutex>
+#include <thread>
+#include <condition_variable>
 #include <stdarg.h>
 
 typedef char Char;
