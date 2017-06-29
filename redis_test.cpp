@@ -36,10 +36,7 @@ int main(int argc, char **argv)
             xGuildMgr.LogicCheckTick();
         }
 
-
         msTimer xTimer;
-
-
 
         //xGuildMgr.SaveGuild();
 
@@ -49,7 +46,6 @@ int main(int argc, char **argv)
         //    xRedisMgr.HashSet("abc", std::to_string(i), std::to_string(i + 100000));
         //}
         //msAssertLog("插入10000耗时%lld秒,%lld微妙", xTimer.elapsed_seconds(), xTimer.elapsed_micro());
-
 
         //xTimer.reset();
         //for (Int32 i = 0; i < 1000000; i++)

@@ -9,7 +9,7 @@ class SyncQueue
 public:
     SyncQueue(Int32 maxSize = 81920)
         : m_maxSize(maxSize)
-        , m_needStop(False)
+        // , m_needStop(False)
     {
         ;
     }
@@ -28,7 +28,7 @@ public:
     {
         std::unique_lock<std::mutex> locker(m_mutex);
         //m_notEmpty.wait(locker, [this] {return m_needStop || NotEmpty(); });
-        if (m_needStop) { return; }
+        // if (m_needStop) { return; }
 
         list = std::move(m_queue);
         //m_notFull.notify_one();
@@ -38,7 +38,7 @@ public:
     {
         std::unique_lock<std::mutex> locker(m_mutex);
         //m_notEmpty.wait(locker, [this] { return m_needStop || NotEmpty(); });
-        if (m_needStop) { return False; }
+        // if (m_needStop) { return False; }
         if (m_queue.size() > 0)
         {
             t = m_queue.front();
@@ -56,7 +56,7 @@ public:
     {
         {
             std::lock_guard<std::mutex> locker(m_mutex);
-            m_needStop = True;
+            // m_needStop = True;
         }
         //m_notFull.notify_all();
         //m_notEmpty.notify_all();
@@ -103,7 +103,7 @@ private:
     {
         std::unique_lock<std::mutex> locker(m_mutex);
         //m_notFull.wait(locker, [this] {return m_needStop || NotFull(); });
-        if (m_needStop) { return; }
+        // if (m_needStop) { return; }
 
         m_queue.push_back(std::forward<F>(x));
         //m_notEmpty.notify_one();
@@ -117,7 +117,7 @@ private:
     //std::condition_variable m_notFull;
 
     Int32 m_maxSize;
-    Boolean m_needStop;
+    // Boolean m_needStop;
 };
 
 

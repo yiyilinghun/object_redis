@@ -1,17 +1,7 @@
 ﻿#include "guild_mgr.h"
 
 msGuildMgr::msGuildMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTimeout, const Char *xPassword)
-    : msRedisMgr(xHost, xPort, xDBIndex, xTimeout, xPassword)
-    , m_TaskThread(&msGuildMgr::TaskThreadCB, this)
-    , m_CreateGuild(this)
-    , m_DisbandGuild(this)
-    , m_JoinGuild(this)
-    , m_InviteGuild(this)
-    , m_GetGuildBaseInfo(this)
-    , m_GetGuildLeaguerList(this)
-    , m_GetGuildNotice(this)
-    , m_SetGuildNotice(this)
-    , m_SaveGuild(this)
+    : msRedisMgr(xHost, xPort, xDBIndex, xTimeout, xPassword), m_TaskThread(&msGuildMgr::TaskThreadCB, this), m_CreateGuild(this), m_DisbandGuild(this), m_JoinGuild(this), m_InviteGuild(this), m_GetGuildBaseInfo(this), m_GetGuildLeaguerList(this), m_GetGuildNotice(this), m_SetGuildNotice(this), m_SaveGuild(this)
 {
     m_GuildId = 100;
     m_GuildName = u8"测试公会";
@@ -29,14 +19,14 @@ void msGuildMgr::Shutdown()
     m_TaskThread.join();
 }
 
-void msGuildMgr::AddTask(msLPL* xLPL)
+void msGuildMgr::AddTask(msLPL *xLPL)
 {
-    //msAssertLog("%s->Put", xLPL->m_Params.back()[0].c_str());
+    msAssertLog("%s->Put", xLPL->m_Params.back()[0].c_str());
     m_TaskQueue.Put(xLPL);
 }
 
 //Boolean msGuildMgr::SaveGuild()
-Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr *xGuildMgr)
 {
     msRedisMulKV xKVs;
 
@@ -46,11 +36,10 @@ Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr* xGuildMgr)
     xKVs.PushKV(u8"CreateTime", std::to_string(xGuildMgr->m_CreateTime));
     for (int i = 0; i < 10; i++)
     {
-        xKVs.PushKV(std::to_string(i), std::to_string(i*i));
+        xKVs.PushKV(std::to_string(i), std::to_string(i * i));
     }
     xGuildMgr->HashSetList(u8"Guild:KV" + xGuildMgr->m_GuildName, xKVs);
     msAssertLog("耗时%lld毫秒,%lld微妙", xTimer.elapsed(), xTimer.elapsed_micro());
-
 
     xGuildMgr->HashSet(u8"Guild:" + xGuildMgr->m_GuildName, u8"GuildName", xGuildMgr->m_GuildName);
     xGuildMgr->HashSet(u8"Guild:" + xGuildMgr->m_GuildName, u8"CreateTime", std::to_string(xGuildMgr->m_CreateTime));
@@ -58,42 +47,42 @@ Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr* xGuildMgr)
     return True;
 }
 
-Boolean msGuildMgr::DisbandGuild::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::DisbandGuild::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::JoinGuild::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::JoinGuild::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::InviteGuild::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::InviteGuild::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::GetGuildBaseInfo::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::GetGuildBaseInfo::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::GetGuildLeaguerList::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::GetGuildLeaguerList::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::GetGuildNotice::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::GetGuildNotice::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::SetGuildNotice::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::SetGuildNotice::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
 
-Boolean msGuildMgr::SaveGuild::Do(msGuildMgr* xGuildMgr)
+Boolean msGuildMgr::SaveGuild::Do(msGuildMgr *xGuildMgr)
 {
     return False;
 }
@@ -120,20 +109,25 @@ void msGuildMgr::TaskThreadCB()
 {
     while (!m_StopTaskThread)
     {
-        msLPL* xLpl = nullptr;
-        if (m_TaskQueue.Take(xLpl))
+        if (m_TaskQueue.Take(m_DoingLPL))
         {
-            if (xLpl->_Do())
+            if (m_DoingLPL)
             {
-                m_CompleteTaskQueue.Put(xLpl->m_OnSucceed.front());
+                if (m_DoingLPL->_Do())
+                {
+                    msAssertLog("%s->m_CompleteTaskQueuePut", m_DoingLPL->m_Params.front()[0].c_str());
+                    m_CompleteTaskQueue.Put(m_DoingLPL->m_OnSucceed.front());
+                }
+                else
+                {
+                    msAssertLog("%s->m_CompleteTaskQueuePut", m_DoingLPL->m_Params.front()[0].c_str());
+                    m_CompleteTaskQueue.Put(m_DoingLPL->m_Onfailed.front());
+                }
+                m_DoingLPL->m_OnSucceed.pop();
+                m_DoingLPL->m_Onfailed.pop();
+                m_DoingLPL->m_Params.pop();
+                m_DoingLPL = nullptr;
             }
-            else
-            {
-                m_CompleteTaskQueue.Put(xLpl->m_Onfailed.front());
-            }
-            xLpl->m_OnSucceed.pop();
-            xLpl->m_Onfailed.pop();
-            xLpl->m_Params.pop();
         }
         else
         {
@@ -142,8 +136,7 @@ void msGuildMgr::TaskThreadCB()
     }
 }
 
-
 Boolean msGuildMgr::IsBusy()
 {
-    return m_TaskQueue.Count() > 0 || m_CompleteTaskQueue.Count() > 0;
+    return m_DoingLPL || m_TaskQueue.Count() > 0 || m_CompleteTaskQueue.Count() > 0;
 }

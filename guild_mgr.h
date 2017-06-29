@@ -65,6 +65,7 @@ public:
     // 任务相关
 private:
     void AddTask(msLPL*);
+    msLPL* m_DoingLPL = nullptr;
     SyncQueue<msLPL*> m_TaskQueue;
     SyncQueue<std::function<void(void)>> m_CompleteTaskQueue;
 protected:
