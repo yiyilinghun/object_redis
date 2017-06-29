@@ -9,6 +9,9 @@
 #include <chrono>
 #include <iomanip>
 #include <vector>
+#include <functional>
+#include <list>
+#include <queue>
 
 #include <stdarg.h>
 

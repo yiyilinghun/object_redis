@@ -21,6 +21,7 @@
     <ClInclude Include="ms_base.h" />
     <ClInclude Include="guild_mgr.h" />
     <ClInclude Include="logic_production_line.h" />
+    <ClInclude Include="squeue.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="redis">

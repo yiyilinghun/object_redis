@@ -21,8 +21,22 @@ int main(int argc, char **argv)
         //xRedisMgr.SelectDB(1);
         //msAssertLog("查询Redis[%s]长度为[%d]!", "tk_list_8", xRedisMgr.GetSize("tk_list_8"));
 
+        for (Int32 i = 0; i < 1000; i++)
+        {
+            xGuildMgr.m_CreateGuild.Invoke(
+                [=]() {; }, // OnSucceed
+                [=]() {; }  // Onfailed
+            );
+
+            xGuildMgr.LogicCheckTick();
+        }
         msTimer xTimer;
-        xGuildMgr.SaveGuild();
+
+
+
+        //xGuildMgr.SaveGuild();
+
+        xGuildMgr.Shutdown();
         //for (Int32 i = 0; i < 1000000; i++)
         //{
         //    xRedisMgr.HashSet("abc", std::to_string(i), std::to_string(i + 100000));

@@ -2,36 +2,76 @@
 #include "redis/credis.h"
 #include "ms_base.h"
 #include "redis_mgr.h"
+#include "logic_production_line.h"
+#include "squeue.hpp"
+
+//class CreateGuildLPL : msLPL
+//{
+//    virtual void Do()
+//    {
+//
+//    }
+//};
+//
+//
+//class CreateGuildLPL : msLPL
+//{
+//    virtual void Do()
+//    {
+//
+//    }
+//};
+
+#define FASE_DEF_TASK_LPL(__class_name__) friend class __class_name__; \
+class __class_name__ : public msLPL\
+{\
+public:\
+    __class_name__(msGuildMgr* xGuildMgr)\
+    {\
+    }\
+    virtual bool _Do()\
+    {\
+        return Do(m_GuildMgr);\
+    }\
+    virtual void OnInvoke()\
+    {\
+        m_GuildMgr->m_TaskQueue.push(this);\
+    }\
+    Boolean Do(msGuildMgr* xGuildMgr);\
+private:\
+msGuildMgr* m_GuildMgr;\
+}
 
 class msGuildMgr : msRedisMgr
 {
 public:
     msGuildMgr(const Char *xHost = "127.0.0.1", Int32 xPort = 6379, Int32 xDBIndex = 0, Int32 xTimeout = 10000, const Char *xPassword = nullptr);
     ~msGuildMgr();
+    void Shutdown();
 
     // 公会基础功能
-    Boolean asyn_CreateGuild();             // 创建公会
-    Boolean asyn_DisbandGuild();            // 解散公会
-    Boolean asyn_JoinGuild();               // 申请加入公会
-    Boolean asyn_InviteGuild();             // 邀请加入公会
-    Boolean asyn_GetGuildBaseInfo();        // 获取公会基础信息
-    Boolean asyn_GetGuildLeaguerList();     // 获取公会成员列表
-    Boolean asyn_GetGuildNotice();          // 获取公会公告
-    Boolean asyn_SetGuildNotice();          // 设置公会公告
+    FASE_DEF_TASK_LPL(CreateGuildLPL)       m_CreateGuild;          // 创建公会
+    FASE_DEF_TASK_LPL(DisbandGuild)         m_DisbandGuild;         // 解散公会
+    FASE_DEF_TASK_LPL(JoinGuild)            m_JoinGuild;            // 申请加入公会
+    FASE_DEF_TASK_LPL(InviteGuild)          m_InviteGuild;          // 邀请加入公会
+    FASE_DEF_TASK_LPL(GetGuildBaseInfo)     m_GetGuildBaseInfo;     // 获取公会基础信息
+    FASE_DEF_TASK_LPL(GetGuildLeaguerList)  m_GetGuildLeaguerList;  // 获取公会成员列表
+    FASE_DEF_TASK_LPL(GetGuildNotice)       m_GetGuildNotice;       // 获取公会公告
+    FASE_DEF_TASK_LPL(SetGuildNotice)       m_SetGuildNotice;       // 设置公会公告
+    FASE_DEF_TASK_LPL(SaveGuild)            m_SaveGuild;            // 申请公会存盘
 
-    Boolean CreateGuild();                  // 创建公会
-    Boolean DisbandGuild();                 // 解散公会
-    Boolean JoinGuild();                    // 申请加入公会
-    Boolean InviteGuild();                  // 邀请加入公会
-    Boolean GetGuildBaseInfo();             // 获取公会基础信息
-    Boolean GetGuildLeaguerList();          // 获取公会成员列表
-    Boolean GetGuildNotice();               // 获取公会公告
-    Boolean SetGuildNotice();               // 设置公会公告
+    void LogicCheckTick(Int32 xExeNum = 100);  // 逻辑线程处理
 
+    // 线程相关
+private:
+    Boolean m_StopTaskThread = False;
+    std::thread m_TaskThread;
+    void TaskThreadCB();   // 任务线程回调
 
-
-
-    Boolean SaveGuild();                    // 申请公会存盘
+    // 任务相关
+private:
+    squeue<msLPL*> m_TaskQueue;
+    squeue<std::function<void(void)>> m_CompleteTaskQueue;
 protected:
 private:
     Int64   m_GuildId;

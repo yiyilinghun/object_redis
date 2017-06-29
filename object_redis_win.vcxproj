@@ -165,6 +165,7 @@
     <ClInclude Include="logic_production_line.h" />
     <ClInclude Include="guild_mgr.h" />
     <ClInclude Include="ms_base.h" />
+    <ClInclude Include="squeue.hpp" />
     <ClInclude Include="redis\credis.h" />
     <ClInclude Include="redis_mgr.h" />
   </ItemGroup>
