@@ -27,11 +27,11 @@ public:
     void Take(std::list<T>& list)
     {
         std::unique_lock<std::mutex> locker(m_mutex);
-        m_notEmpty.wait(locker, [this] {return m_needStop || NotEmpty(); });
+        //m_notEmpty.wait(locker, [this] {return m_needStop || NotEmpty(); });
         if (m_needStop) { return; }
 
         list = std::move(m_queue);
-        m_notFull.notify_one();
+        //m_notFull.notify_one();
     }
 
     Boolean Take(T& t)
@@ -58,8 +58,8 @@ public:
             std::lock_guard<std::mutex> locker(m_mutex);
             m_needStop = True;
         }
-        m_notFull.notify_all();
-        m_notEmpty.notify_all();
+        //m_notFull.notify_all();
+        //m_notEmpty.notify_all();
     }
 
     Boolean Empty()
