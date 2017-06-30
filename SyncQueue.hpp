@@ -24,6 +24,20 @@ public:
         Add(std::forward<T>(x));
     }
 
+    Boolean Take()
+    {
+        std::unique_lock<std::mutex> locker(m_mutex);
+        if (m_queue.size() > 0)
+        {
+            m_queue.pop_front();
+            return True;
+        }
+        else
+        {
+            return False;
+        }
+    }
+
     void Take(std::list<T>& list)
     {
         std::unique_lock<std::mutex> locker(m_mutex);
