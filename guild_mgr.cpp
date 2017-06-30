@@ -21,8 +21,12 @@ void msGuildMgr::Shutdown()
 
 void msGuildMgr::AddTask(msLPL *xLPL)
 {
-    msAssertLog("%s->Put", xLPL->m_Params.back()[0].c_str());
-    m_TaskQueue.Put(xLPL);
+    std::vector<mstr> xVec;
+    if (xLPL->m_Params.Peek(xVec))
+    {
+        msAssertLog("%s->Put", xVec[0].c_str());
+        m_TaskQueue.Put(xLPL);
+    }
 }
 
 //Boolean msGuildMgr::SaveGuild()
@@ -115,17 +119,33 @@ void msGuildMgr::TaskThreadCB()
             {
                 if (m_DoingLPL->_Do())
                 {
-                    msAssertLog("%s->m_CompleteTaskQueuePut", m_DoingLPL->m_Params.front()[0].c_str());
-                    m_CompleteTaskQueue.Put(m_DoingLPL->m_OnSucceed.front());
+                    std::vector<mstr> xVec;
+                    if (m_DoingLPL->m_Params.Take(xVec))
+                    {
+                        msAssertLog("%s->m_CompleteTaskQueuePut_OnSucceed", xVec[0].c_str());
+                        std::function<void(void)> xFun;
+                        if (m_DoingLPL->m_OnSucceed.Take(xFun))
+                        {
+                            m_CompleteTaskQueue.Put(xFun);
+                        }
+                    }
                 }
                 else
                 {
-                    msAssertLog("%s->m_CompleteTaskQueuePut", m_DoingLPL->m_Params.front()[0].c_str());
-                    m_CompleteTaskQueue.Put(m_DoingLPL->m_Onfailed.front());
+                    std::vector<mstr> xVec;
+                    if (m_DoingLPL->m_Params.Take(xVec))
+                    {
+                        msAssertLog("%s->m_CompleteTaskQueuePut_Onfailed", xVec[0].c_str());
+                        std::function<void(void)> xFun;
+                        if (m_DoingLPL->m_Onfailed.Take(xFun))
+                        {
+                            m_CompleteTaskQueue.Put(xFun);
+                        }
+                    }
                 }
-                m_DoingLPL->m_OnSucceed.pop();
-                m_DoingLPL->m_Onfailed.pop();
-                m_DoingLPL->m_Params.pop();
+                //m_DoingLPL->m_OnSucceed.pop();
+                //m_DoingLPL->m_Onfailed.pop();
+                //m_DoingLPL->m_Params.pop();
                 m_DoingLPL = nullptr;
             }
         }

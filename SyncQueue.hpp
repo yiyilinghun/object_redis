@@ -52,6 +52,23 @@ public:
         }
     }
 
+    Boolean Peek(T& t)
+    {
+        std::unique_lock<std::mutex> locker(m_mutex);
+        //m_notEmpty.wait(locker, [this] { return m_needStop || NotEmpty(); });
+        // if (m_needStop) { return False; }
+        if (m_queue.size() > 0)
+        {
+            t = m_queue.front();
+            //m_notFull.notify_one();
+            return True;
+        }
+        else
+        {
+            return False;
+        }
+    }
+
     void Stop()
     {
         {
