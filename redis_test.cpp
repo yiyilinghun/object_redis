@@ -20,26 +20,38 @@ int main(int argc, char **argv)
 
         //xRedisMgr.SelectDB(1);
         //msAssertLog("查询Redis[%s]长度为[%d]!", "tk_list_8", xRedisMgr.GetSize("tk_list_8"));
-        for (Int32 i = 0; ; i++)
+        while (true)
         {
-            msAssertLog("%d->Ask", i);
-            xGuildMgr.m_CreateGuild.Invoke(
-                [=]()
+            if (xGuildMgr.m_CreateGuild.m_Onfailed.Count() < 1000)
             {
-                msAssertLog("%d->OnSucceed", i);
-            }, // OnSucceed
-                [=]()
+                for (Int32 i = 0; i < 1000; i++)
+                {
+                    msAssertLog("%d->Ask", i);
+                    xGuildMgr.m_CreateGuild.Invoke(
+                        [=]()
+                    {
+                        msAssertLog("%d->OnSucceed", i);
+                    }, // OnSucceed
+                        [=]()
+                    {
+                        msAssertLog("%d->Onfailed", i);
+                    },  // Onfailed
+                        std::to_string(i)
+                        );
+                }
+            }
+            else
             {
-                msAssertLog("%d->Onfailed", i);
-            },  // Onfailed
-                std::to_string(i)
-                );
+                msAssertLog("%d->Wait", xGuildMgr.m_CreateGuild.m_Onfailed.Count());
+                xGuildMgr.LogicCheckTick();
+                //std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
         }
 
-        while (xGuildMgr.IsBusy())
-        {
-            xGuildMgr.LogicCheckTick();
-        }
+        //while (xGuildMgr.IsBusy())
+        //{
+        //    xGuildMgr.LogicCheckTick();
+        //}
 
         msTimer xTimer;
 

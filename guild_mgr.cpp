@@ -120,11 +120,11 @@ void msGuildMgr::TaskThreadCB()
                 if (m_DoingLPL->_Do())
                 {
                     std::vector<mstr> xVec;
-                    if (m_DoingLPL->m_Params.Take(xVec))
+                    if (m_DoingLPL->m_Params.Peek(xVec))
                     {
                         msAssertLog("%s->m_CompleteTaskQueuePut_OnSucceed", xVec[0].c_str());
                         std::function<void(void)> xFun;
-                        if (m_DoingLPL->m_OnSucceed.Take(xFun))
+                        if (m_DoingLPL->m_OnSucceed.Peek(xFun))
                         {
                             m_CompleteTaskQueue.Put(xFun);
                         }
@@ -133,19 +133,19 @@ void msGuildMgr::TaskThreadCB()
                 else
                 {
                     std::vector<mstr> xVec;
-                    if (m_DoingLPL->m_Params.Take(xVec))
+                    if (m_DoingLPL->m_Params.Peek(xVec))
                     {
                         msAssertLog("%s->m_CompleteTaskQueuePut_Onfailed", xVec[0].c_str());
                         std::function<void(void)> xFun;
-                        if (m_DoingLPL->m_Onfailed.Take(xFun))
+                        if (m_DoingLPL->m_Onfailed.Peek(xFun))
                         {
                             m_CompleteTaskQueue.Put(xFun);
                         }
                     }
                 }
-                //m_DoingLPL->m_OnSucceed.pop();
-                //m_DoingLPL->m_Onfailed.pop();
-                //m_DoingLPL->m_Params.pop();
+                m_DoingLPL->m_OnSucceed.Take();
+                m_DoingLPL->m_Onfailed.Take();
+                m_DoingLPL->m_Params.Take();
                 m_DoingLPL = nullptr;
             }
         }
