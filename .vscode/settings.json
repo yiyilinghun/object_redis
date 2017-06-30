@@ -9,6 +9,7 @@
         "utility": "cpp",
         "initializer_list": "cpp",
         "type_traits": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "credis.c": "cpp"
     }
 }
