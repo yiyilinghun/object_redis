@@ -55,11 +55,11 @@
 
 #include "credis.h"
 
-//#ifdef WIN
-//void close(int fd) {
-//    closesocket(fd);
-//}
-//#endif
+ //#ifdef WIN
+ //void close(int fd) {
+ //    closesocket(fd);
+ //}
+ //#endif
 
 #define CR_BUFFER_SIZE 40960
 #define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE)/10+1)
@@ -540,16 +540,16 @@ static int cr_receivereply(REDIS rhnd, char recvtype)
             return CREDIS_ERR_PROTOCOL;
 
         switch (prefix) {
-        case CR_ERROR:
-            return cr_receiveerror(rhnd, line);
-        case CR_INLINE:
-            return cr_receiveinline(rhnd, line);
-        case CR_INT:
-            return cr_receiveint(rhnd, line);
-        case CR_BULK:
-            return cr_receivebulk(rhnd, line);
-        case CR_MULTIBULK:
-            return cr_receivemultibulk(rhnd, line);
+            case CR_ERROR:
+                return cr_receiveerror(rhnd, line);
+            case CR_INLINE:
+                return cr_receiveinline(rhnd, line);
+            case CR_INT:
+                return cr_receiveint(rhnd, line);
+            case CR_BULK:
+                return cr_receivebulk(rhnd, line);
+            case CR_MULTIBULK:
+                return cr_receivemultibulk(rhnd, line);
         }
     }
 
@@ -662,12 +662,14 @@ void credis_close(REDIS rhnd)
 {
     if (rhnd) {
         if (rhnd->fd > 0)
+        {
 #ifdef WIN
-        closesocket(rhnd->fd);
-        WSACleanup();
+            closesocket(rhnd->fd);
+            WSACleanup();
 #else
-        close(rhnd->fd);
+            close(rhnd->fd);
 #endif
+        }
         cr_delete(rhnd);
     }
 }
@@ -746,7 +748,7 @@ REDIS credis_connect(const char *host, int port, int timeout)
     flags = fcntl(fd, F_GETFL);
     if ((rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0) {
         DEBUG("Setting socket non-blocking failed with: %d\n", rc);
-}
+    }
 #endif
 
     if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0) {
@@ -796,7 +798,14 @@ REDIS credis_connect(const char *host, int port, int timeout)
 
 error:
     if (fd > 0)
+    {
+
+#ifdef WIN
+        closesocket(fd);
+#else
         close(fd);
+#endif
+    }
     cr_delete(rhnd);
 
     return NULL;
@@ -902,10 +911,10 @@ static int cr_incr(REDIS rhnd, int incr, int decr, const char *key, int *new_val
 
     if (incr == 1 || decr == 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s\r\n",
-        incr > 0 ? "INCR" : "DECR", key);
+            incr > 0 ? "INCR" : "DECR", key);
     else if (incr > 1 || decr > 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s %d\r\n",
-        incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
+            incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
 
     if (rc == 0 && new_val != NULL)
         *new_val = rhnd->reply.integer;
@@ -1528,17 +1537,17 @@ static int cr_zstore(REDIS rhnd, int inter, const char *destkey, int keyc, const
                 return rc;
 
     switch (aggregate) {
-    case SUM:
-        rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
-        break;
-    case MIN:
-        rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
-        break;
-    case MAX:
-        rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
-        break;
-    case NONE:
-        ; /* avoiding compiler warning */
+        case SUM:
+            rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
+            break;
+        case MIN:
+            rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
+            break;
+        case MAX:
+            rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
+            break;
+        case NONE:
+            ; /* avoiding compiler warning */
     }
     if (rc != 0)
         return rc;

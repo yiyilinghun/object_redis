@@ -166,7 +166,7 @@
     <ClCompile Include="logic_production_line.cpp" />
     <ClCompile Include="ms_base.cpp" />
     <ClCompile Include="redis\credis-test.c" />
-    <ClCompile Include="redis\credis.c" />
+    <ClCompile Include="redis\credis.cpp" />
     <ClCompile Include="redis\redis_mgr.cpp" />
     <ClCompile Include="redis_test.cpp" />
   </ItemGroup>

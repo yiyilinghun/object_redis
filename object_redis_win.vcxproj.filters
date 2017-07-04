@@ -2,9 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="redis_test.cpp" />
-    <ClCompile Include="redis\credis.c">
-      <Filter>redis</Filter>
-    </ClCompile>
     <ClCompile Include="redis\credis-test.c">
       <Filter>redis</Filter>
     </ClCompile>
@@ -16,6 +13,9 @@
     </ClCompile>
     <ClCompile Include="ms_base.cpp" />
     <ClCompile Include="logic_production_line.cpp" />
+    <ClCompile Include="redis\credis.cpp">
+      <Filter>redis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="redis\credis.h">
