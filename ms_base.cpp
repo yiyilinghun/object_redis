@@ -9,7 +9,7 @@ void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr
     xLogBaseBuff.resize(1024);
     sprintf((Char*)xLogBaseBuff.data(),
         "\n"
-        "time:[%04d-%02d-%02d %02d:%02d:%02d]file:[%s(%d)] func:[%s(%s)+]"
+        "time:[%04d-%02d-%02d %02d:%02d:%02d]file:[%s(%lu)] func:[%s(%s)+]"
         "\n"
         "info:[%s]"
         "\n",
