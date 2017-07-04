@@ -1,5 +1,4 @@
-﻿//#include "PCH.h"
-/* credis.c -- a C client library for Redis
+﻿/* credis.c -- a C client library for Redis
  *
  * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>
  * All rights reserved.
@@ -34,7 +33,6 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
-#include <errno.h>
 #else 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -55,11 +53,11 @@
 
 #include "credis.h"
 
- //#ifdef WIN
- //void close(int fd) {
- //    closesocket(fd);
- //}
- //#endif
+#ifdef WIN
+void close(int fd) {
+    closesocket(fd);
+}
+#endif
 
 #define CR_BUFFER_SIZE 40960
 #define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE)/10+1)
@@ -79,7 +77,7 @@
     printf("%s() @ %d: ", __FUNCTION__, __LINE__); \
     printf(__VA_ARGS__);                           \
     printf("\n");                                  \
-    } while (0)
+  } while (0)
 #else
 #define DEBUG(...)
 #endif
@@ -152,7 +150,7 @@ static int cr_moremem(cr_buffer *buf, int size)
 
     DEBUG("allocate %d x CR_BUFFER_SIZE, total %d bytes", n, total);
 
-    ptr = (char*)realloc(buf->data, total);
+    ptr = realloc(buf->data, total);
     if (ptr == NULL)
         return -1;
 
@@ -177,8 +175,8 @@ static int cr_morebulk(cr_multibulk *mb, int size)
 
     DEBUG("allocate %d x CR_MULTIBULK_SIZE, total %d (%lu bytes)",
         n, total, total * ((sizeof(char *) + sizeof(int))));
-    cptr = (char**)realloc(mb->bulks, total * sizeof(char *));
-    iptr = (int*)realloc(mb->idxs, total * sizeof(int));
+    cptr = realloc(mb->bulks, total * sizeof(char *));
+    iptr = realloc(mb->idxs, total * sizeof(int));
 
     if (cptr == NULL || iptr == NULL)
         return CREDIS_ERR_NOMEM;
@@ -424,7 +422,7 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
         else
             return -1; /* error */
 
-        /* do we need more data before we expect to find "\r\n"? */
+          /* do we need more data before we expect to find "\r\n"? */
         if ((more = buf->idx + start + 2 - buf->len) < 0)
             more = 0;
     }
@@ -574,11 +572,11 @@ REDIS cr_new(void)
 {
     REDIS rhnd;
 
-    if ((rhnd = (REDIS)calloc(sizeof(cr_redis), 1)) == NULL ||
-        (rhnd->ip = (char*)malloc(32)) == NULL ||
-        (rhnd->buf.data = (char*)malloc(CR_BUFFER_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.bulks = (char**)malloc(sizeof(char *)*CR_MULTIBULK_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.idxs = (int*)malloc(sizeof(int)*CR_MULTIBULK_SIZE)) == NULL) {
+    if ((rhnd = calloc(sizeof(cr_redis), 1)) == NULL ||
+        (rhnd->ip = malloc(32)) == NULL ||
+        (rhnd->buf.data = malloc(CR_BUFFER_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.bulks = malloc(sizeof(char *)*CR_MULTIBULK_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.idxs = malloc(sizeof(int)*CR_MULTIBULK_SIZE)) == NULL) {
         cr_delete(rhnd);
         return NULL;
     }
@@ -662,14 +660,10 @@ void credis_close(REDIS rhnd)
 {
     if (rhnd) {
         if (rhnd->fd > 0)
-        {
-#ifdef WIN
-            closesocket(rhnd->fd);
-            WSACleanup();
-#else
             close(rhnd->fd);
+#ifdef WIN
+        WSACleanup();
 #endif
-        }
         cr_delete(rhnd);
     }
 }
@@ -798,14 +792,7 @@ REDIS credis_connect(const char *host, int port, int timeout)
 
 error:
     if (fd > 0)
-    {
-
-#ifdef WIN
-        closesocket(fd);
-#else
         close(fd);
-#endif
-    }
     cr_delete(rhnd);
 
     return NULL;
@@ -1236,7 +1223,7 @@ int credis_bgrewriteaof(REDIS rhnd)
  */
 void cr_parseinfo(const char *info, const char *field, const char *format, void *storage)
 {
-    char *str = (char*)strstr(info, field);
+    char *str = strstr(info, field);
     if (str) {
         str += strlen(field) + 1; /* also skip the ':' */
         sscanf(str, format, storage);
