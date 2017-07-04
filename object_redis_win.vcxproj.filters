@@ -8,18 +8,26 @@
     <ClCompile Include="redis\credis-test.c">
       <Filter>redis</Filter>
     </ClCompile>
-    <ClCompile Include="redis_mgr.cpp" />
+    <ClCompile Include="guild\guild_mgr.cpp">
+      <Filter>guild</Filter>
+    </ClCompile>
+    <ClCompile Include="redis\redis_mgr.cpp">
+      <Filter>redis</Filter>
+    </ClCompile>
     <ClCompile Include="ms_base.cpp" />
-    <ClCompile Include="guild_mgr.cpp" />
     <ClCompile Include="logic_production_line.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="redis\credis.h">
       <Filter>redis</Filter>
     </ClInclude>
-    <ClInclude Include="redis_mgr.h" />
+    <ClInclude Include="guild\guild_mgr.h">
+      <Filter>guild</Filter>
+    </ClInclude>
+    <ClInclude Include="redis\redis_mgr.h">
+      <Filter>redis</Filter>
+    </ClInclude>
     <ClInclude Include="ms_base.h" />
-    <ClInclude Include="guild_mgr.h" />
     <ClInclude Include="logic_production_line.h" />
     <ClInclude Include="squeue.hpp" />
     <ClInclude Include="SyncQueue.hpp" />
@@ -27,6 +35,9 @@
   <ItemGroup>
     <Filter Include="redis">
       <UniqueIdentifier>{2f599557-a119-49e3-84f0-8dd7beab832f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guild">
+      <UniqueIdentifier>{c35eac99-789e-49f0-ab0e-1d2bc8c71c85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

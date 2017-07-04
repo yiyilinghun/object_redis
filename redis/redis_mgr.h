@@ -2,7 +2,7 @@
 #define __REDIS_MGR_H__
 
 #include "ms_base.h"
-#include "redis/credis.h"
+#include "credis.h"
 
 struct msRedisMulKV
 {

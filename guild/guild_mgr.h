@@ -1,5 +1,5 @@
 ﻿#include <iostream>
-#include "redis/credis.h"
+#include "credis.h"
 #include "ms_base.h"
 #include "redis_mgr.h"
 #include "logic_production_line.h"

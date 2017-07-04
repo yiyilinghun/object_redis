@@ -91,6 +91,7 @@
       <PreprocessorDefinitions>WIN;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>./;./guild;./redis;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,6 +107,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>./;./guild;./redis;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,6 +127,7 @@
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>./;./guild;./redis;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,6 +150,7 @@
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>./;./guild;./redis;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -158,21 +162,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="guild\guild_mgr.cpp" />
     <ClCompile Include="logic_production_line.cpp" />
-    <ClCompile Include="guild_mgr.cpp" />
     <ClCompile Include="ms_base.cpp" />
     <ClCompile Include="redis\credis-test.c" />
     <ClCompile Include="redis\credis.c" />
+    <ClCompile Include="redis\redis_mgr.cpp" />
     <ClCompile Include="redis_test.cpp" />
-    <ClCompile Include="redis_mgr.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="guild\guild_mgr.h" />
     <ClInclude Include="logic_production_line.h" />
-    <ClInclude Include="guild_mgr.h" />
     <ClInclude Include="ms_base.h" />
-    <ClInclude Include="squeue.hpp" />
     <ClInclude Include="redis\credis.h" />
-    <ClInclude Include="redis_mgr.h" />
+    <ClInclude Include="redis\redis_mgr.h" />
+    <ClInclude Include="squeue.hpp" />
     <ClInclude Include="SyncQueue.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
