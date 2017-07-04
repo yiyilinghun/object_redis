@@ -1,4 +1,5 @@
-﻿/* credis.c -- a C client library for Redis
+﻿#include "PCH.h"
+/* credis.c -- a C client library for Redis
  *
  * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>
  * All rights reserved.
@@ -54,11 +55,11 @@
 
 #include "credis.h"
 
-#ifdef WIN
-void close(int fd) {
-    closesocket(fd);
-}
-#endif
+//#ifdef WIN
+//void close(int fd) {
+//    closesocket(fd);
+//}
+//#endif
 
 #define CR_BUFFER_SIZE 40960
 #define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE)/10+1)
@@ -78,7 +79,7 @@ void close(int fd) {
     printf("%s() @ %d: ", __FUNCTION__, __LINE__); \
     printf(__VA_ARGS__);                           \
     printf("\n");                                  \
-  } while (0)
+    } while (0)
 #else
 #define DEBUG(...)
 #endif
@@ -151,7 +152,7 @@ static int cr_moremem(cr_buffer *buf, int size)
 
     DEBUG("allocate %d x CR_BUFFER_SIZE, total %d bytes", n, total);
 
-    ptr = realloc(buf->data, total);
+    ptr = (char*)realloc(buf->data, total);
     if (ptr == NULL)
         return -1;
 
@@ -176,8 +177,8 @@ static int cr_morebulk(cr_multibulk *mb, int size)
 
     DEBUG("allocate %d x CR_MULTIBULK_SIZE, total %d (%lu bytes)",
         n, total, total * ((sizeof(char *) + sizeof(int))));
-    cptr = realloc(mb->bulks, total * sizeof(char *));
-    iptr = realloc(mb->idxs, total * sizeof(int));
+    cptr = (char**)realloc(mb->bulks, total * sizeof(char *));
+    iptr = (int*)realloc(mb->idxs, total * sizeof(int));
 
     if (cptr == NULL || iptr == NULL)
         return CREDIS_ERR_NOMEM;
@@ -423,7 +424,7 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
         else
             return -1; /* error */
 
-          /* do we need more data before we expect to find "\r\n"? */
+        /* do we need more data before we expect to find "\r\n"? */
         if ((more = buf->idx + start + 2 - buf->len) < 0)
             more = 0;
     }
@@ -539,16 +540,16 @@ static int cr_receivereply(REDIS rhnd, char recvtype)
             return CREDIS_ERR_PROTOCOL;
 
         switch (prefix) {
-            case CR_ERROR:
-                return cr_receiveerror(rhnd, line);
-            case CR_INLINE:
-                return cr_receiveinline(rhnd, line);
-            case CR_INT:
-                return cr_receiveint(rhnd, line);
-            case CR_BULK:
-                return cr_receivebulk(rhnd, line);
-            case CR_MULTIBULK:
-                return cr_receivemultibulk(rhnd, line);
+        case CR_ERROR:
+            return cr_receiveerror(rhnd, line);
+        case CR_INLINE:
+            return cr_receiveinline(rhnd, line);
+        case CR_INT:
+            return cr_receiveint(rhnd, line);
+        case CR_BULK:
+            return cr_receivebulk(rhnd, line);
+        case CR_MULTIBULK:
+            return cr_receivemultibulk(rhnd, line);
         }
     }
 
@@ -573,11 +574,11 @@ REDIS cr_new(void)
 {
     REDIS rhnd;
 
-    if ((rhnd = calloc(sizeof(cr_redis), 1)) == NULL ||
-        (rhnd->ip = malloc(32)) == NULL ||
-        (rhnd->buf.data = malloc(CR_BUFFER_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.bulks = malloc(sizeof(char *)*CR_MULTIBULK_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.idxs = malloc(sizeof(int)*CR_MULTIBULK_SIZE)) == NULL) {
+    if ((rhnd = (REDIS)calloc(sizeof(cr_redis), 1)) == NULL ||
+        (rhnd->ip = (char*)malloc(32)) == NULL ||
+        (rhnd->buf.data = (char*)malloc(CR_BUFFER_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.bulks = (char**)malloc(sizeof(char *)*CR_MULTIBULK_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.idxs = (int*)malloc(sizeof(int)*CR_MULTIBULK_SIZE)) == NULL) {
         cr_delete(rhnd);
         return NULL;
     }
@@ -661,9 +662,11 @@ void credis_close(REDIS rhnd)
 {
     if (rhnd) {
         if (rhnd->fd > 0)
-            close(rhnd->fd);
 #ifdef WIN
+        closesocket(rhnd->fd);
         WSACleanup();
+#else
+        close(rhnd->fd);
 #endif
         cr_delete(rhnd);
     }
@@ -743,7 +746,7 @@ REDIS credis_connect(const char *host, int port, int timeout)
     flags = fcntl(fd, F_GETFL);
     if ((rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0) {
         DEBUG("Setting socket non-blocking failed with: %d\n", rc);
-    }
+}
 #endif
 
     if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0) {
@@ -752,7 +755,7 @@ REDIS credis_connect(const char *host, int port, int timeout)
 
         if (cr_selectwritable(fd, timeout) > 0) {
             int err;
-            unsigned int len = sizeof(err);
+            int len = sizeof(err);
             if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&err, &len) == -1 || err)
                 goto error;
         }
@@ -899,10 +902,10 @@ static int cr_incr(REDIS rhnd, int incr, int decr, const char *key, int *new_val
 
     if (incr == 1 || decr == 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s\r\n",
-            incr > 0 ? "INCR" : "DECR", key);
+        incr > 0 ? "INCR" : "DECR", key);
     else if (incr > 1 || decr > 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s %d\r\n",
-            incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
+        incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
 
     if (rc == 0 && new_val != NULL)
         *new_val = rhnd->reply.integer;
@@ -1224,7 +1227,7 @@ int credis_bgrewriteaof(REDIS rhnd)
  */
 void cr_parseinfo(const char *info, const char *field, const char *format, void *storage)
 {
-    char *str = strstr(info, field);
+    char *str = (char*)strstr(info, field);
     if (str) {
         str += strlen(field) + 1; /* also skip the ':' */
         sscanf(str, format, storage);
@@ -1525,17 +1528,17 @@ static int cr_zstore(REDIS rhnd, int inter, const char *destkey, int keyc, const
                 return rc;
 
     switch (aggregate) {
-        case SUM:
-            rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
-            break;
-        case MIN:
-            rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
-            break;
-        case MAX:
-            rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
-            break;
-        case NONE:
-            ; /* avoiding compiler warning */
+    case SUM:
+        rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
+        break;
+    case MIN:
+        rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
+        break;
+    case MAX:
+        rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
+        break;
+    case NONE:
+        ; /* avoiding compiler warning */
     }
     if (rc != 0)
         return rc;

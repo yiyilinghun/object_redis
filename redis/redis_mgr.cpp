@@ -1,4 +1,5 @@
-﻿#include "redis_mgr.h"
+﻿#include "PCH.h"
+#include "redis_mgr.h"
 
 msRedisMgr::msRedisMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTimeout, const Char *xPassword)
     : m_Host(xHost), m_Port(xPort)

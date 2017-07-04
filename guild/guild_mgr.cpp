@@ -1,4 +1,5 @@
-﻿#include "guild_mgr.h"
+﻿#include "PCH.h"
+#include "guild_mgr.h"
 
 msGuildMgr::msGuildMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTimeout, const Char *xPassword)
     : msRedisMgr(xHost, xPort, xDBIndex, xTimeout, xPassword), m_TaskThread(&msGuildMgr::TaskThreadCB, this), m_CreateGuild(this), m_DisbandGuild(this), m_JoinGuild(this), m_InviteGuild(this), m_GetGuildBaseInfo(this), m_GetGuildLeaguerList(this), m_GetGuildNotice(this), m_SetGuildNotice(this), m_SaveGuild(this)

@@ -23,8 +23,8 @@ typedef unsigned char Byte;
 typedef signed short Int16;
 typedef unsigned short Unt16;
 
-typedef signed long Int32;
-typedef unsigned long Unt32;
+typedef int Int32;
+typedef unsigned int Unt32;
 
 #ifdef WIN
 typedef signed __int64 Int64;
@@ -42,7 +42,7 @@ typedef float Single;
 typedef double Double;
 
 typedef Unt16   WORD;
-typedef Unt32   DWORD;
+typedef unsigned long   DWORD;
 typedef Unt64   QWORD;
 typedef size_t  TSIZE;
 

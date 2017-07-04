@@ -1,4 +1,5 @@
-﻿#include "ms_base.h"
+﻿#include "PCH.h"
+#include "ms_base.h"
 
 void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...)
 {
