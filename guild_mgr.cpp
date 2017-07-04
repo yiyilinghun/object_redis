@@ -4,7 +4,8 @@ msGuildMgr::msGuildMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTi
     : msRedisMgr(xHost, xPort, xDBIndex, xTimeout, xPassword), m_TaskThread(&msGuildMgr::TaskThreadCB, this), m_CreateGuild(this), m_DisbandGuild(this), m_JoinGuild(this), m_InviteGuild(this), m_GetGuildBaseInfo(this), m_GetGuildLeaguerList(this), m_GetGuildNotice(this), m_SetGuildNotice(this), m_SaveGuild(this)
 {
     m_GuildId = 100;
-    m_GuildName = u8"测试公会";
+    m_GuildName = U8("测试公会");
+    var x = msStrAssist::u82m(m_GuildName);
     m_CreateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 }
 
@@ -36,17 +37,17 @@ Boolean msGuildMgr::CreateGuildLPL::Do(msGuildMgr *xGuildMgr)
 
     msTimer xTimer;
 
-    xKVs.PushKV(u8"GuildName", xGuildMgr->m_GuildName);
-    xKVs.PushKV(u8"CreateTime", std::to_string(xGuildMgr->m_CreateTime));
+    xKVs.PushKV(U8("GuildName"), xGuildMgr->m_GuildName);
+    xKVs.PushKV(U8("CreateTime"), std::to_string(xGuildMgr->m_CreateTime));
     for (int i = 0; i < 10; i++)
     {
         xKVs.PushKV(std::to_string(i), std::to_string(i * i));
     }
-    xGuildMgr->HashSetList(u8"Guild:KV" + xGuildMgr->m_GuildName, xKVs);
+    xGuildMgr->HashSetList(U8("Guild:KV") + xGuildMgr->m_GuildName, xKVs);
     msAssertLog("耗时%lld毫秒,%lld微妙", xTimer.elapsed(), xTimer.elapsed_micro());
 
-    xGuildMgr->HashSet(u8"Guild:" + xGuildMgr->m_GuildName, u8"GuildName", xGuildMgr->m_GuildName);
-    xGuildMgr->HashSet(u8"Guild:" + xGuildMgr->m_GuildName, u8"CreateTime", std::to_string(xGuildMgr->m_CreateTime));
+    xGuildMgr->HashSet(U8("Guild:") + xGuildMgr->m_GuildName, U8("GuildName"), xGuildMgr->m_GuildName);
+    xGuildMgr->HashSet(U8("Guild:") + xGuildMgr->m_GuildName, U8("CreateTime"), std::to_string(xGuildMgr->m_CreateTime));
 
     return True;
 }

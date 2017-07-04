@@ -107,7 +107,7 @@ Int32 msRedisMgr::HashSetList(mstr xHashName, std::vector<mstr>& xKeys, std::vec
         msAssertLog("xKeys.size() != xValues.size()");
         return -1;
     }
-    for (int i = 0; i < xKeys.size(); i++)
+    for (TSIZE i = 0; i < xKeys.size(); i++)
     {
         xBuff += " " + xKeys[i];
         xBuff += R"( ")" + xValues[i] + R"(")";

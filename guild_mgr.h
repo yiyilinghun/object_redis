@@ -31,7 +31,7 @@ public:\
     }\
     virtual bool _Do()\
     {\
-        return Do(m_GuildMgr);\
+        return (bool)Do(m_GuildMgr);\
     }\
     virtual void OnInvoke()\
     {\

@@ -33,6 +33,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
+#include "errno.h"
 #else 
 #include <arpa/inet.h>
 #include <errno.h>

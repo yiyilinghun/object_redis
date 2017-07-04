@@ -28,16 +28,10 @@ int main(int argc, char **argv)
                 {
                     msAssertLog("%d->Ask", i);
                     xGuildMgr.m_CreateGuild.Invoke(
-                        [=]()
-                    {
-                        msAssertLog("%d->OnSucceed", i);
-                    }, // OnSucceed
-                        [=]()
-                    {
-                        msAssertLog("%d->Onfailed", i);
-                    },  // Onfailed
+                        [=]() {msAssertLog("%d->OnSucceed", i); }, // OnSucceed
+                        [=]() {msAssertLog("%d->Onfailed", i); },  // Onfailed
                         std::to_string(i)
-                        );
+                    );
                 }
             }
             else
