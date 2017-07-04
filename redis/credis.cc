@@ -1,4 +1,4 @@
-﻿#include "PCH.h"
+﻿//#include "PCH.h"
 /* credis.c -- a C client library for Redis
  *
  * Copyright (c) 2009-2010, Jonas Romfelt <jonas at romfelt dot se>
@@ -757,7 +757,7 @@ REDIS credis_connect(const char *host, int port, int timeout)
 
         if (cr_selectwritable(fd, timeout) > 0) {
             int err;
-            int len = sizeof(err);
+            unsigned int len = sizeof(err);
             if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&err, &len) == -1 || err)
                 goto error;
         }

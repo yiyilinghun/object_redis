@@ -8,7 +8,6 @@ aux_source_directory(./guild base_dir_srcs)
 INCLUDE_DIRECTORIES(./)
 INCLUDE_DIRECTORIES(./redis)
 INCLUDE_DIRECTORIES(./guild)
-INCLUDE_DIRECTORIES(./build)
 
 add_executable(redis_test.out ${base_dir_srcs})
 
