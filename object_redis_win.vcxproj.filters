@@ -13,7 +13,7 @@
     </ClCompile>
     <ClCompile Include="ms_base.cpp" />
     <ClCompile Include="logic_production_line.cpp" />
-    <ClCompile Include="redis\credis.cpp">
+    <ClCompile Include="redis\credis.c">
       <Filter>redis</Filter>
     </ClCompile>
   </ItemGroup>
