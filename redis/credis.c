@@ -34,7 +34,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
-#else 
+#else
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -54,15 +54,21 @@
 
 #include "credis.h"
 
- //#ifdef WIN
- //void close(int fd) {
- //    closesocket(fd);
- //}
- //#endif
+// #ifdef WIN
+// void close(int fd) {
+//     closesocket(fd);
+// }
+// #endif
 
-#define CR_BUFFER_SIZE 40960
-#define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE)/10+1)
-#define CR_MULTIBULK_SIZE 2560
+#define CR_ERROR '-'
+#define CR_INLINE '+'
+#define CR_BULK '$'
+#define CR_MULTIBULK '*'
+#define CR_INT ':'
+
+#define CR_BUFFER_SIZE 4096
+#define CR_BUFFER_WATERMARK ((CR_BUFFER_SIZE) / 10 + 1)
+#define CR_MULTIBULK_SIZE 256
 
 #define _STRINGIF(arg) #arg
 #define STRINGIFY(arg) _STRINGIF(arg)
@@ -73,12 +79,13 @@
 
 #ifdef PRINTDEBUG
 /* add -DPRINTDEBUG to CPPFLAGS in Makefile for debug outputs */
-#define DEBUG(...)                                 \
-  do {                                             \
-    printf("%s() @ %d: ", __FUNCTION__, __LINE__); \
-    printf(__VA_ARGS__);                           \
-    printf("\n");                                  \
-  } while (0)
+#define DEBUG(...)                                     \
+    do                                                 \
+    {                                                  \
+        printf("%s() @ %d: ", __FUNCTION__, __LINE__); \
+        printf(__VA_ARGS__);                           \
+        printf("\n");                                  \
+    } while (0)
 #else
 #define DEBUG(...)
 #endif
@@ -88,29 +95,34 @@
 #define __attribute__(x)
 #endif
 
-typedef struct _cr_buffer {
+typedef struct _cr_buffer
+{
     char *data;
     int idx;
     int len;
     int size;
 } cr_buffer;
 
-typedef struct _cr_multibulk {
+typedef struct _cr_multibulk
+{
     char **bulks;
     int *idxs;
     int size;
     int len;
 } cr_multibulk;
 
-typedef struct _cr_reply {
+typedef struct _cr_reply
+{
     int integer;
     char *line;
     char *bulk;
     cr_multibulk multibulk;
 } cr_reply;
 
-typedef struct _cr_redis {
-    struct {
+typedef struct _cr_redis
+{
+    struct
+    {
         int major;
         int minor;
         int patch;
@@ -124,11 +136,12 @@ typedef struct _cr_redis {
     int error;
 } cr_redis;
 
-
 /* Returns pointer to the '\r' of the first occurence of "\r\n", or NULL
  * if not found */
-static char * cr_findnl(char *buf, int len) {
-    while (--len >= 0) {
+static char *cr_findnl(char *buf, int len)
+{
+    while (--len >= 0)
+    {
         if (*(buf++) == '\r')
             if (*buf == '\n')
                 return --buf;
@@ -151,7 +164,7 @@ static int cr_moremem(cr_buffer *buf, int size)
 
     DEBUG("allocate %d x CR_BUFFER_SIZE, total %d bytes", n, total);
 
-    ptr = (char*)realloc(buf->data, total);
+    ptr = realloc(buf->data, total);
     if (ptr == NULL)
         return -1;
 
@@ -175,9 +188,9 @@ static int cr_morebulk(cr_multibulk *mb, int size)
     total = mb->size + n;
 
     DEBUG("allocate %d x CR_MULTIBULK_SIZE, total %d (%lu bytes)",
-        n, total, total * ((sizeof(char *) + sizeof(int))));
-    cptr = (char**)realloc(mb->bulks, total * sizeof(char *));
-    iptr = (int*)realloc(mb->idxs, total * sizeof(int));
+          n, total, total * ((sizeof(char *) + sizeof(int))));
+    cptr = realloc(mb->bulks, total * sizeof(char *));
+    iptr = realloc(mb->idxs, total * sizeof(int));
 
     if (cptr == NULL || iptr == NULL)
         return CREDIS_ERR_NOMEM;
@@ -198,9 +211,11 @@ static int cr_splitstrtromultibulk(REDIS rhnd, char *str, const char token)
 {
     int i = 0;
 
-    if (str != NULL) {
+    if (str != NULL)
+    {
         rhnd->reply.multibulk.bulks[i++] = str;
-        while ((str = strchr(str, token))) {
+        while ((str = strchr(str, token)))
+        {
             *str++ = '\0';
             if (i >= rhnd->reply.multibulk.size)
                 if (cr_morebulk(&(rhnd->reply.multibulk), 1))
@@ -233,7 +248,8 @@ static int cr_appendstrf(cr_buffer *buf, const char *format, ...)
     if (rc < 0)
         return -1;
 
-    if (rc >= avail) {
+    if (rc >= avail)
+    {
         if (cr_moremem(buf, rc - avail + 1))
             return CREDIS_ERR_NOMEM;
 
@@ -289,12 +305,14 @@ static int cr_appendstrarray(cr_buffer *buf, int strc, const char **strv, int ne
 {
     int rc, i;
 
-    for (i = 0; i < strc; i++) {
+    for (i = 0; i < strc; i++)
+    {
         if ((rc = cr_appendstr(buf, strv[i], 1)) != 0)
             return rc;
     }
 
-    if (newline) {
+    if (newline)
+    {
         if ((rc = cr_appendstr(buf, "\r\n", 0)) != 0)
             return rc;
     }
@@ -362,13 +380,15 @@ static int cr_senddata(int fd, unsigned int msecs, char *buf, int size)
     tv.tv_sec = msecs / 1000;
     tv.tv_usec = (msecs % 1000) * 1000;
 
-    while (sent < size) {
+    while (sent < size)
+    {
         FD_ZERO(&fds);
         FD_SET(fd, &fds);
 
         rc = select(fd + 1, NULL, &fds, NULL, &tv);
 
-        if (rc > 0) {
+        if (rc > 0)
+        {
             rc = send(fd, buf + sent, size - sent, 0);
             if (rc < 0)
                 return -1;
@@ -403,9 +423,11 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
         more = 0;
 
     while (more > 0 ||
-        (nl = cr_findnl(buf->data + buf->idx + start, buf->len - (buf->idx + start))) == NULL) {
+           (nl = cr_findnl(buf->data + buf->idx + start, buf->len - (buf->idx + start))) == NULL)
+    {
         avail = buf->size - buf->len;
-        if (avail < CR_BUFFER_WATERMARK || avail < more) {
+        if (avail < CR_BUFFER_WATERMARK || avail < more)
+        {
             DEBUG("available buffer memory is low, get more memory");
             if (cr_moremem(buf, more > 0 ? more : 1))
                 return CREDIS_ERR_NOMEM;
@@ -414,7 +436,8 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
         }
 
         rc = cr_receivedata(rhnd->fd, rhnd->timeout, buf->data + buf->len, avail);
-        if (rc > 0) {
+        if (rc > 0)
+        {
             DEBUG("received %d bytes: %s", rc, buf->data + buf->len);
             buf->len += rc;
         }
@@ -423,7 +446,7 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
         else
             return -1; /* error */
 
-          /* do we need more data before we expect to find "\r\n"? */
+        /* do we need more data before we expect to find "\r\n"? */
         if ((more = buf->idx + start + 2 - buf->len) < 0)
             more = 0;
     }
@@ -437,7 +460,7 @@ static int cr_readln(REDIS rhnd, int start, char **line, int *idx)
     buf->idx = (int)((nl - buf->data) + 2); /* skip "\r\n" */
 
     DEBUG("size=%d, len=%d, idx=%d, start=%d, line=%s",
-        buf->size, buf->len, buf->idx, start, *line);
+          buf->size, buf->len, buf->idx, start, *line);
 
     return len;
 }
@@ -448,24 +471,28 @@ static int cr_receivemultibulk(REDIS rhnd, char *line)
 
     bnum = atoi(line);
 
-    if (bnum == -1) {
+    if (bnum == -1)
+    {
         rhnd->reply.multibulk.len = 0; /* no data or key didn't exist */
         return 0;
     }
-    else if (bnum > rhnd->reply.multibulk.size) {
+    else if (bnum > rhnd->reply.multibulk.size)
+    {
         DEBUG("available multibulk storage is low, get more memory");
         if (cr_morebulk(&(rhnd->reply.multibulk), bnum - rhnd->reply.multibulk.size))
             return CREDIS_ERR_NOMEM;
     }
 
-    for (i = 0; bnum > 0 && (rc = cr_readln(rhnd, 0, &line, NULL)) > 0; i++, bnum--) {
+    for (i = 0; bnum > 0 && (rc = cr_readln(rhnd, 0, &line, NULL)) > 0; i++, bnum--)
+    {
         if (*(line++) != CR_BULK)
             return CREDIS_ERR_PROTOCOL;
 
         blen = atoi(line);
         if (blen == -1)
             rhnd->reply.multibulk.idxs[i] = -1;
-        else {
+        else
+        {
             if ((rc = cr_readln(rhnd, blen, &line, &idx)) != blen)
                 return CREDIS_ERR_PROTOCOL;
 
@@ -473,13 +500,15 @@ static int cr_receivemultibulk(REDIS rhnd, char *line)
         }
     }
 
-    if (bnum != 0) {
+    if (bnum != 0)
+    {
         DEBUG("bnum != 0, bnum=%d, rc=%d", bnum, rc);
         return CREDIS_ERR_PROTOCOL;
     }
 
     rhnd->reply.multibulk.len = i;
-    for (i = 0; i < rhnd->reply.multibulk.len; i++) {
+    for (i = 0; i < rhnd->reply.multibulk.len; i++)
+    {
         if (rhnd->reply.multibulk.idxs[i] > 0)
             rhnd->reply.multibulk.bulks[i] = rhnd->buf.data + rhnd->reply.multibulk.idxs[i];
         else
@@ -494,11 +523,13 @@ static int cr_receivebulk(REDIS rhnd, char *line)
     int blen;
 
     blen = atoi(line);
-    if (blen == -1) {
+    if (blen == -1)
+    {
         rhnd->reply.bulk = NULL; /* key didn't exist */
         return 0;
     }
-    if (cr_readln(rhnd, blen, &line, NULL) >= 0) {
+    if (cr_readln(rhnd, blen, &line, NULL) >= 0)
+    {
         rhnd->reply.bulk = line;
         return 0;
     }
@@ -532,23 +563,25 @@ static int cr_receivereply(REDIS rhnd, char recvtype)
     rhnd->buf.len = 0;
     rhnd->buf.idx = 0;
 
-    if (cr_readln(rhnd, 0, &line, NULL) > 0) {
+    if (cr_readln(rhnd, 0, &line, NULL) > 0)
+    {
         prefix = *(line++);
 
         if (prefix != recvtype && prefix != CR_ERROR)
             return CREDIS_ERR_PROTOCOL;
 
-        switch (prefix) {
-            case CR_ERROR:
-                return cr_receiveerror(rhnd, line);
-            case CR_INLINE:
-                return cr_receiveinline(rhnd, line);
-            case CR_INT:
-                return cr_receiveint(rhnd, line);
-            case CR_BULK:
-                return cr_receivebulk(rhnd, line);
-            case CR_MULTIBULK:
-                return cr_receivemultibulk(rhnd, line);
+        switch (prefix)
+        {
+        case CR_ERROR:
+            return cr_receiveerror(rhnd, line);
+        case CR_INLINE:
+            return cr_receiveinline(rhnd, line);
+        case CR_INT:
+            return cr_receiveint(rhnd, line);
+        case CR_BULK:
+            return cr_receivebulk(rhnd, line);
+        case CR_MULTIBULK:
+            return cr_receivemultibulk(rhnd, line);
         }
     }
 
@@ -573,11 +606,12 @@ REDIS cr_new(void)
 {
     REDIS rhnd;
 
-    if ((rhnd = (REDIS)calloc(sizeof(cr_redis), 1)) == NULL ||
-        (rhnd->ip = (char*)malloc(32)) == NULL ||
-        (rhnd->buf.data = (char*)malloc(CR_BUFFER_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.bulks = (char**)malloc(sizeof(char *)*CR_MULTIBULK_SIZE)) == NULL ||
-        (rhnd->reply.multibulk.idxs = (int*)malloc(sizeof(int)*CR_MULTIBULK_SIZE)) == NULL) {
+    if ((rhnd = calloc(sizeof(cr_redis), 1)) == NULL ||
+        (rhnd->ip = malloc(32)) == NULL ||
+        (rhnd->buf.data = malloc(CR_BUFFER_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.bulks = malloc(sizeof(char *) * CR_MULTIBULK_SIZE)) == NULL ||
+        (rhnd->reply.multibulk.idxs = malloc(sizeof(int) * CR_MULTIBULK_SIZE)) == NULL)
+    {
         cr_delete(rhnd);
         return NULL;
     }
@@ -598,7 +632,8 @@ static int cr_sendandreceive(REDIS rhnd, char recvtype)
 
     rc = cr_senddata(rhnd->fd, rhnd->timeout, rhnd->buf.data, rhnd->buf.len);
 
-    if (rc != rhnd->buf.len) {
+    if (rc != rhnd->buf.len)
+    {
         if (rc < 0)
             return CREDIS_ERR_SEND;
         return CREDIS_ERR_TIMEOUT;
@@ -606,7 +641,6 @@ static int cr_sendandreceive(REDIS rhnd, char recvtype)
 
     return cr_receivereply(rhnd, recvtype);
 }
-
 
 /* Prepare message buffer for sending using a printf()-style. */
 int credis_send(REDIS rhnd, char recvtype, const char *command)
@@ -621,10 +655,8 @@ int credis_send(REDIS rhnd, char recvtype, const char *command)
     return cr_sendandreceive(rhnd, recvtype);
 }
 
-
 /* Prepare message buffer for sending using a printf()-style formatting. */
-__attribute__((format(printf, 3, 4)))
-static int cr_sendfandreceive(REDIS rhnd, char recvtype, const char *format, ...)
+__attribute__((format(printf, 3, 4))) static int cr_sendfandreceive(REDIS rhnd, char recvtype, const char *format, ...)
 {
     int rc;
     va_list ap;
@@ -637,7 +669,8 @@ static int cr_sendfandreceive(REDIS rhnd, char recvtype, const char *format, ...
     if (rc < 0)
         return -1;
 
-    if (rc >= buf->size) {
+    if (rc >= buf->size)
+    {
         DEBUG("truncated, get more memory and try again");
         if (cr_moremem(buf, rc - buf->size + 1))
             return CREDIS_ERR_NOMEM;
@@ -652,19 +685,20 @@ static int cr_sendfandreceive(REDIS rhnd, char recvtype, const char *format, ...
     return cr_sendandreceive(rhnd, recvtype);
 }
 
-char * credis_errorreply(REDIS rhnd)
+char *credis_errorreply(REDIS rhnd)
 {
     return rhnd->reply.line;
 }
 
 void credis_close(REDIS rhnd)
 {
-    if (rhnd) {
+    if (rhnd)
+    {
         if (rhnd->fd > 0)
         {
 #ifdef WIN
             closesocket(rhnd->fd);
-        WSACleanup();
+            WSACleanup();
 #else
             close(rhnd->fd);
 #endif
@@ -688,7 +722,8 @@ REDIS credis_connect(const char *host, int port, int timeout)
     unsigned long addr;
     WSADATA data;
 
-    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
+    if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
+    {
         DEBUG("Failed to init Windows Sockets DLL\n");
         return NULL;
     }
@@ -720,48 +755,55 @@ REDIS credis_connect(const char *host, int port, int timeout)
 #ifdef WIN
     /* TODO use getaddrinfo() instead! */
     addr = inet_addr(host);
-    if (addr == INADDR_NONE) {
+    if (addr == INADDR_NONE)
+    {
         he = gethostbyname(host);
         use_he = 1;
     }
-    else {
+    else
+    {
         he = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
         use_he = 1;
     }
 #else
-    if (inet_aton(host, &sa.sin_addr) == 0) {
+    if (inet_aton(host, &sa.sin_addr) == 0)
+    {
         he = gethostbyname(host);
         use_he = 1;
     }
 #endif
 
-    if (use_he) {
+    if (use_he)
+    {
         if (he == NULL)
             goto error;
         memcpy(&sa.sin_addr, he->h_addr, sizeof(struct in_addr));
     }
 
-    /* connect with user specified timeout */
+/* connect with user specified timeout */
 #ifdef WIN
 #else
     flags = fcntl(fd, F_GETFL);
-    if ((rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0) {
+    if ((rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0)
+    {
         DEBUG("Setting socket non-blocking failed with: %d\n", rc);
     }
 #endif
 
-    if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0) {
+    if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0)
+    {
         if (errno != EINPROGRESS)
             goto error;
 
-        if (cr_selectwritable(fd, timeout) > 0) {
+        if (cr_selectwritable(fd, timeout) > 0)
+        {
             int err;
 #ifdef WIN
             int len = sizeof(err);
 #else
             unsigned int len = sizeof(err);
 #endif
-            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&err, &len) == -1 || err)
+            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len) == -1 || err)
             {
                 goto error;
             }
@@ -778,25 +820,27 @@ REDIS credis_connect(const char *host, int port, int timeout)
 
     /* We can receive 2 version formats: x.yz and x.y.z, where x.yz was only used prior
      * first 1.1.0 release(?), e.g. stable releases 1.02 and 1.2.6 */
-    if (cr_sendfandreceive(rhnd, CR_BULK, "INFO\r\n") == 0) {
-        char* xTemp = strstr(rhnd->reply.bulk, "redis_version");
+    if (cr_sendfandreceive(rhnd, CR_BULK, "INFO\r\n") == 0)
+    {
+        char *xTemp = strstr(rhnd->reply.bulk, "redis_version");
         if (!xTemp)
         {
             goto error;
         }
         int items = sscanf(xTemp,
-            "redis_version:%d.%d.%d\r\n",
-            &(rhnd->version.major),
-            &(rhnd->version.minor),
-            &(rhnd->version.patch));
+                           "redis_version:%d.%d.%d\r\n",
+                           &(rhnd->version.major),
+                           &(rhnd->version.minor),
+                           &(rhnd->version.patch));
         if (items < 2)
             goto error;
-        if (items == 2) {
+        if (items == 2)
+        {
             rhnd->version.patch = rhnd->version.minor;
             rhnd->version.minor = 0;
         }
         DEBUG("Connected to Redis version: %d.%d.%d\n",
-            rhnd->version.major, rhnd->version.minor, rhnd->version.patch);
+              rhnd->version.major, rhnd->version.minor, rhnd->version.patch);
     }
 
     return rhnd;
@@ -816,6 +860,146 @@ error:
     return NULL;
 }
 
+// REDIS credis_connect(const char *host, int port, int timeout)
+// {
+// #ifdef WIN
+//     int fd, yes = 1, use_he = 0;
+// #else
+//     int fd, rc, flags, yes = 1, use_he = 0;
+// #endif
+//     struct sockaddr_in sa;
+//     struct hostent *he;
+//     REDIS rhnd;
+
+// #ifdef WIN
+//     unsigned long addr;
+//     WSADATA data;
+
+//     if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
+//     {
+//         DEBUG("Failed to init Windows Sockets DLL\n");
+//         return NULL;
+//     }
+// #endif
+
+//     if ((rhnd = cr_new()) == NULL)
+//         return NULL;
+
+//     if (host == NULL)
+//         host = "127.0.0.1";
+//     if (port == 0)
+//         port = 6379;
+
+// #ifdef WIN
+//     if ((fd = (int)socket(AF_INET, SOCK_STREAM, 0)) == -1 ||
+//         setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char *)&yes, sizeof(yes)) == -1 ||
+//         setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&yes, sizeof(yes)) == -1)
+//         goto error;
+// #else
+//     if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ||
+//         setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&yes, sizeof(yes)) == -1 ||
+//         setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes)) == -1)
+//         goto error;
+// #endif
+
+//     sa.sin_family = AF_INET;
+//     sa.sin_port = htons(port);
+
+// #ifdef WIN
+//     /* TODO use getaddrinfo() instead! */
+//     addr = inet_addr(host);
+//     if (addr == INADDR_NONE)
+//     {
+//         he = gethostbyname(host);
+//         use_he = 1;
+//     }
+//     else
+//     {
+//         he = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
+//         use_he = 1;
+//     }
+// #else
+//     if (inet_aton(host, &sa.sin_addr) == 0)
+//     {
+//         he = gethostbyname(host);
+//         use_he = 1;
+//     }
+// #endif
+
+//     if (use_he)
+//     {
+//         if (he == NULL)
+//             goto error;
+//         memcpy(&sa.sin_addr, he->h_addr, sizeof(struct in_addr));
+//     }
+
+// /* connect with user specified timeout */
+// #ifdef WIN
+// #else
+//     flags = fcntl(fd, F_GETFL);
+//     if ((rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0)
+//     {
+//         DEBUG("Setting socket non-blocking failed with: %d\n", rc);
+//     }
+// #endif
+
+//     if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0)
+//     {
+//         if (errno != EINPROGRESS)
+//             goto error;
+
+//         if (cr_selectwritable(fd, timeout) > 0)
+//         {
+//             int err;
+//             unsigned int len = sizeof(err);
+//             if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &len) == -1 || err)
+//                 goto error;
+//         }
+//         else /* timeout or select error */
+//             goto error;
+//     }
+//     /* else connect completed immediately */
+
+//     strcpy(rhnd->ip, inet_ntoa(sa.sin_addr));
+//     rhnd->port = port;
+//     rhnd->fd = fd;
+//     rhnd->timeout = timeout;
+
+//     /* We can receive 2 version formats: x.yz and x.y.z, where x.yz was only used prior
+//      * first 1.1.0 release(?), e.g. stable releases 1.02 and 1.2.6 */
+//     if (cr_sendfandreceive(rhnd, CR_BULK, "INFO\r\n") == 0)
+//     {
+//         char *xTemp = strstr(rhnd->reply.bulk, "redis_version");
+//         if (!xTemp)
+//         {
+//             goto error;
+//         }
+//         int items = sscanf(xTemp,
+//                            "redis_version:%d.%d.%d\r\n",
+//                            &(rhnd->version.major),
+//                            &(rhnd->version.minor),
+//                            &(rhnd->version.patch));
+//         if (items < 2)
+//             goto error;
+//         if (items == 2)
+//         {
+//             rhnd->version.patch = rhnd->version.minor;
+//             rhnd->version.minor = 0;
+//         }
+//         DEBUG("Connected to Redis version: %d.%d.%d\n",
+//               rhnd->version.major, rhnd->version.minor, rhnd->version.patch);
+//     }
+
+//     return rhnd;
+
+// error:
+//     if (fd > 0)
+//         close(fd);
+//     cr_delete(rhnd);
+
+//     return NULL;
+// }
+
 void credis_settimeout(REDIS rhnd, int timeout)
 {
     rhnd->timeout = timeout;
@@ -824,7 +1008,7 @@ void credis_settimeout(REDIS rhnd, int timeout)
 int credis_set(REDIS rhnd, const char *key, const char *val)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "SET %s %zu\r\n%s\r\n",
-        key, strlen(val), val);
+                              key, strlen(val), val);
 }
 
 int credis_get(REDIS rhnd, const char *key, char **val)
@@ -840,7 +1024,7 @@ int credis_get(REDIS rhnd, const char *key, char **val)
 int credis_getset(REDIS rhnd, const char *key, const char *set_val, char **get_val)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "GETSET %s %zu\r\n%s\r\n",
-        key, strlen(set_val), set_val);
+                                key, strlen(set_val), set_val);
 
     if (rc == 0 && (*get_val = rhnd->reply.bulk) == NULL)
         return -1;
@@ -859,7 +1043,7 @@ int credis_auth(REDIS rhnd, const char *password)
 }
 
 static int cr_multikeybulkcommand(REDIS rhnd, const char *cmd, int keyc,
-    const char **keyv, char ***valv)
+                                  const char **keyv, char ***valv)
 {
     cr_buffer *buf = &(rhnd->buf);
     int rc;
@@ -869,7 +1053,8 @@ static int cr_multikeybulkcommand(REDIS rhnd, const char *cmd, int keyc,
         return rc;
     if ((rc = cr_appendstrarray(buf, keyc, keyv, 1)) != 0)
         return rc;
-    if ((rc = cr_sendandreceive(rhnd, CR_MULTIBULK)) == 0) {
+    if ((rc = cr_sendandreceive(rhnd, CR_MULTIBULK)) == 0)
+    {
         *valv = rhnd->reply.multibulk.bulks;
         rc = rhnd->reply.multibulk.len;
     }
@@ -878,7 +1063,7 @@ static int cr_multikeybulkcommand(REDIS rhnd, const char *cmd, int keyc,
 }
 
 static int cr_multikeystorecommand(REDIS rhnd, const char *cmd, const char *destkey,
-    int keyc, const char **keyv)
+                                   int keyc, const char **keyv)
 {
     cr_buffer *buf = &(rhnd->buf);
     int rc;
@@ -902,7 +1087,7 @@ int credis_mget(REDIS rhnd, int keyc, const char **keyv, char ***valv)
 int credis_setnx(REDIS rhnd, const char *key, const char *val)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "SETNX %s %zu\r\n%s\r\n",
-        key, strlen(val), val);
+                                key, strlen(val), val);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -916,10 +1101,10 @@ static int cr_incr(REDIS rhnd, int incr, int decr, const char *key, int *new_val
 
     if (incr == 1 || decr == 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s\r\n",
-            incr > 0 ? "INCR" : "DECR", key);
+                                incr > 0 ? "INCR" : "DECR", key);
     else if (incr > 1 || decr > 1)
         rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s %d\r\n",
-            incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
+                                incr > 0 ? "INCRBY" : "DECRBY", key, incr > 0 ? incr : decr);
 
     if (rc == 0 && new_val != NULL)
         *new_val = rhnd->reply.integer;
@@ -950,7 +1135,7 @@ int credis_decrby(REDIS rhnd, const char *key, int decr_val, int *new_val)
 int credis_append(REDIS rhnd, const char *key, const char *val)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "APPEND %s %zu\r\n%s\r\n",
-        key, strlen(val), val);
+                                key, strlen(val), val);
 
     if (rc == 0)
         rc = rhnd->reply.integer;
@@ -961,7 +1146,7 @@ int credis_append(REDIS rhnd, const char *key, const char *val)
 int credis_substr(REDIS rhnd, const char *key, int start, int end, char **substr)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "SUBSTR %s %d %d\r\n",
-        key, start, end);
+                                key, start, end);
 
     if (rc == 0 && substr)
         *substr = rhnd->reply.bulk;
@@ -993,7 +1178,8 @@ int credis_type(REDIS rhnd, const char *key)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INLINE, "TYPE %s\r\n", key);
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         char *t = rhnd->reply.line;
         if (!strcmp("string", t))
             rc = CREDIS_TYPE_STRING;
@@ -1012,10 +1198,12 @@ int credis_keys(REDIS rhnd, const char *pattern, char ***keyv)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "KEYS %s\r\n", pattern);
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         /* server returns keys as space-separated strings, use multi-bulk
          * storage to store keys */
-        if ((rc = cr_splitstrtromultibulk(rhnd, rhnd->reply.bulk, ' ')) == 0) {
+        if ((rc = cr_splitstrtromultibulk(rhnd, rhnd->reply.bulk, ' ')) == 0)
+        {
             *keyv = rhnd->reply.multibulk.bulks;
             rc = rhnd->reply.multibulk.len;
         }
@@ -1037,13 +1225,13 @@ int credis_randomkey(REDIS rhnd, char **key)
 int credis_rename(REDIS rhnd, const char *key, const char *new_key_name)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "RENAME %s %s\r\n",
-        key, new_key_name);
+                              key, new_key_name);
 }
 
 int credis_renamenx(REDIS rhnd, const char *key, const char *new_key_name)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "RENAMENX %s %s\r\n",
-        key, new_key_name);
+                                key, new_key_name);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -1084,7 +1272,7 @@ int credis_ttl(REDIS rhnd, const char *key)
 static int cr_push(REDIS rhnd, int left, const char *key, const char *val)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "%s %s %zu\r\n%s\r\n",
-        left == 1 ? "LPUSH" : "RPUSH", key, strlen(val), val);
+                              left == 1 ? "LPUSH" : "RPUSH", key, strlen(val), val);
 }
 
 int credis_rpush(REDIS rhnd, const char *key, const char *val)
@@ -1112,7 +1300,8 @@ int credis_lrange(REDIS rhnd, const char *key, int start, int end, char ***valv)
     int rc;
 
     if ((rc = cr_sendfandreceive(rhnd, CR_MULTIBULK, "LRANGE %s %d %d\r\n",
-        key, start, end)) == 0) {
+                                 key, start, end)) == 0)
+    {
         *valv = rhnd->reply.multibulk.bulks;
         rc = rhnd->reply.multibulk.len;
     }
@@ -1123,7 +1312,7 @@ int credis_lrange(REDIS rhnd, const char *key, int start, int end, char ***valv)
 int credis_ltrim(REDIS rhnd, const char *key, int start, int end)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "LTRIM %s %d %d\r\n",
-        key, start, end);
+                              key, start, end);
 }
 
 int credis_lindex(REDIS rhnd, const char *key, int index, char **val)
@@ -1139,19 +1328,19 @@ int credis_lindex(REDIS rhnd, const char *key, int index, char **val)
 int credis_lset(REDIS rhnd, const char *key, int index, const char *val)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "LSET %s %d %zu\r\n%s\r\n",
-        key, index, strlen(val), val);
+                              key, index, strlen(val), val);
 }
 
 int credis_lrem(REDIS rhnd, const char *key, int count, const char *val)
 {
     return cr_sendfandreceive(rhnd, CR_INT, "LREM %s %d %zu\r\n%s\r\n",
-        key, count, strlen(val), val);
+                              key, count, strlen(val), val);
 }
 
 static int cr_pop(REDIS rhnd, int left, const char *key, char **val)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "%s %s\r\n",
-        left == 1 ? "LPOP" : "RPOP", key);
+                                left == 1 ? "LPOP" : "RPOP", key);
 
     if (rc == 0 && (*val = rhnd->reply.bulk) == NULL)
         return -1;
@@ -1198,7 +1387,8 @@ int credis_sort(REDIS rhnd, const char *query, char ***elementv)
 {
     int rc;
 
-    if ((rc = cr_sendfandreceive(rhnd, CR_MULTIBULK, "SORT %s\r\n", query)) == 0) {
+    if ((rc = cr_sendfandreceive(rhnd, CR_MULTIBULK, "SORT %s\r\n", query)) == 0)
+    {
         *elementv = rhnd->reply.multibulk.bulks;
         rc = rhnd->reply.multibulk.len;
     }
@@ -1241,8 +1431,9 @@ int credis_bgrewriteaof(REDIS rhnd)
  */
 void cr_parseinfo(const char *info, const char *field, const char *format, void *storage)
 {
-    char *str = (char*)strstr(info, field);
-    if (str) {
+    char *str = strstr(info, field);
+    if (str)
+    {
         str += strlen(field) + 1; /* also skip the ':' */
         sscanf(str, format, storage);
     }
@@ -1252,12 +1443,13 @@ int credis_info(REDIS rhnd, REDIS_INFO *info)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "INFO\r\n");
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         char role;
         memset(info, 0, sizeof(REDIS_INFO));
-        cr_parseinfo(rhnd->reply.bulk, "redis_version", "%"CR_VERSION_STRING_SIZE_STR"s\r\n", &(info->redis_version));
+        cr_parseinfo(rhnd->reply.bulk, "redis_version", "%" CR_VERSION_STRING_SIZE_STR "s\r\n", &(info->redis_version));
         cr_parseinfo(rhnd->reply.bulk, "arch_bits", "%d", &(info->arch_bits));
-        cr_parseinfo(rhnd->reply.bulk, "multiplexing_api", "%"CR_MULTIPLEXING_API_SIZE_STR"s\r\n", &(info->multiplexing_api));
+        cr_parseinfo(rhnd->reply.bulk, "multiplexing_api", "%" CR_MULTIPLEXING_API_SIZE_STR "s\r\n", &(info->multiplexing_api));
         cr_parseinfo(rhnd->reply.bulk, "process_id", "%ld", &(info->process_id));
         cr_parseinfo(rhnd->reply.bulk, "uptime_in_seconds", "%ld", &(info->uptime_in_seconds));
         cr_parseinfo(rhnd->reply.bulk, "uptime_in_days", "%ld", &(info->uptime_in_days));
@@ -1265,7 +1457,7 @@ int credis_info(REDIS rhnd, REDIS_INFO *info)
         cr_parseinfo(rhnd->reply.bulk, "connected_slaves", "%d", &(info->connected_slaves));
         cr_parseinfo(rhnd->reply.bulk, "blocked_clients", "%d", &(info->blocked_clients));
         cr_parseinfo(rhnd->reply.bulk, "used_memory", "%zu", &(info->used_memory));
-        cr_parseinfo(rhnd->reply.bulk, "used_memory_human", "%"CR_USED_MEMORY_HUMAN_SIZE_STR"s", &(info->used_memory_human));
+        cr_parseinfo(rhnd->reply.bulk, "used_memory_human", "%" CR_USED_MEMORY_HUMAN_SIZE_STR "s", &(info->used_memory_human));
         cr_parseinfo(rhnd->reply.bulk, "changes_since_last_save", "%lld", &(info->changes_since_last_save));
         cr_parseinfo(rhnd->reply.bulk, "bgsave_in_progress", "%d", &(info->bgsave_in_progress));
         cr_parseinfo(rhnd->reply.bulk, "last_save_time", "%ld", &(info->last_save_time));
@@ -1302,7 +1494,7 @@ int credis_slaveof(REDIS rhnd, const char *host, int port)
 static int cr_setaddrem(REDIS rhnd, const char *cmd, const char *key, const char *member)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "%s %s %zu\r\n%s\r\n",
-        cmd, key, strlen(member), member);
+                                cmd, key, strlen(member), member);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -1331,10 +1523,10 @@ int credis_spop(REDIS rhnd, const char *key, char **member)
 }
 
 int credis_smove(REDIS rhnd, const char *sourcekey, const char *destkey,
-    const char *member)
+                 const char *member)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "SMOVE %s %s %s\r\n",
-        sourcekey, destkey, member);
+                                sourcekey, destkey, member);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -1395,7 +1587,7 @@ int credis_smembers(REDIS rhnd, const char *key, char ***members)
 int credis_zadd(REDIS rhnd, const char *key, double score, const char *member)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "ZADD %s %f %zu\r\n%s\r\n",
-        key, score, strlen(member), member);
+                                key, score, strlen(member), member);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -1406,7 +1598,7 @@ int credis_zadd(REDIS rhnd, const char *key, double score, const char *member)
 int credis_zrem(REDIS rhnd, const char *key, const char *member)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "ZREM %s %zu\r\n%s\r\n",
-        key, strlen(member), member);
+                                key, strlen(member), member);
 
     if (rc == 0 && rhnd->reply.integer == 0)
         rc = -1;
@@ -1418,7 +1610,7 @@ int credis_zrem(REDIS rhnd, const char *key, const char *member)
 int credis_zincrby(REDIS rhnd, const char *key, double incr_score, const char *member, double *new_score)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "ZINCRBY %s %f %zu\r\n%s\r\n",
-        key, incr_score, strlen(member), member);
+                                key, incr_score, strlen(member), member);
 
     if (rc == 0 && new_score)
         *new_score = strtod(rhnd->reply.bulk, NULL);
@@ -1430,7 +1622,7 @@ int credis_zincrby(REDIS rhnd, const char *key, double incr_score, const char *m
 static int cr_zrank(REDIS rhnd, int reverse, const char *key, const char *member)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "%s %s %zu\r\n%s\r\n",
-        reverse == 1 ? "ZREVRANK" : "ZRANK", key, strlen(member), member);
+                                reverse == 1 ? "ZREVRANK" : "ZRANK", key, strlen(member), member);
 
     if (rc == 0)
         rc = atoi(rhnd->reply.bulk);
@@ -1451,9 +1643,10 @@ int credis_zrevrank(REDIS rhnd, const char *key, const char *member)
 int cr_zrange(REDIS rhnd, int reverse, const char *key, int start, int end, char ***elementv)
 {
     int rc = cr_sendfandreceive(rhnd, CR_MULTIBULK, "%s %s %d %d\r\n",
-        reverse == 1 ? "ZREVRANGE" : "ZRANGE", key, start, end);
+                                reverse == 1 ? "ZREVRANGE" : "ZRANGE", key, start, end);
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         *elementv = rhnd->reply.multibulk.bulks;
         rc = rhnd->reply.multibulk.len;
     }
@@ -1475,7 +1668,8 @@ int credis_zcard(REDIS rhnd, const char *key)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "ZCARD %s\r\n", key);
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         if (rhnd->reply.integer == 0)
             rc = -1;
         else
@@ -1488,9 +1682,10 @@ int credis_zcard(REDIS rhnd, const char *key)
 int credis_zscore(REDIS rhnd, const char *key, const char *member, double *score)
 {
     int rc = cr_sendfandreceive(rhnd, CR_BULK, "ZSCORE %s %zu\r\n%s\r\n",
-        key, strlen(member), member);
+                                key, strlen(member), member);
 
-    if (rc == 0) {
+    if (rc == 0)
+    {
         if (!rhnd->reply.bulk)
             rc = -1;
         else if (score)
@@ -1503,7 +1698,7 @@ int credis_zscore(REDIS rhnd, const char *key, const char *member, double *score
 int credis_zremrangebyscore(REDIS rhnd, const char *key, double min, double max)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "ZREMRANGEBYSCORE %s %f %f\r\n",
-        key, min, max);
+                                key, min, max);
 
     if (rc == 0)
         rc = rhnd->reply.integer;
@@ -1514,7 +1709,7 @@ int credis_zremrangebyscore(REDIS rhnd, const char *key, double min, double max)
 int credis_zremrangebyrank(REDIS rhnd, const char *key, int start, int end)
 {
     int rc = cr_sendfandreceive(rhnd, CR_INT, "ZREMRANGEBYRANK %s %d %d\r\n",
-        key, start, end);
+                                key, start, end);
 
     if (rc == 0)
         rc = rhnd->reply.integer;
@@ -1525,7 +1720,7 @@ int credis_zremrangebyrank(REDIS rhnd, const char *key, int start, int end)
 /* TODO add writev() support instead and push strings to send onto a vector of
  * strings to send instead... */
 static int cr_zstore(REDIS rhnd, int inter, const char *destkey, int keyc, const char **keyv,
-    const int *weightv, REDIS_AGGREGATE aggregate)
+                     const int *weightv, REDIS_AGGREGATE aggregate)
 {
     cr_buffer *buf = &(rhnd->buf);
     int rc, i;
@@ -1541,18 +1736,18 @@ static int cr_zstore(REDIS rhnd, int inter, const char *destkey, int keyc, const
             if ((rc = cr_appendstrf(buf, " %d", weightv[i])) != 0)
                 return rc;
 
-    switch (aggregate) {
-        case SUM:
-            rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
-            break;
-        case MIN:
-            rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
-            break;
-        case MAX:
-            rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
-            break;
-        case NONE:
-            ; /* avoiding compiler warning */
+    switch (aggregate)
+    {
+    case SUM:
+        rc = cr_appendstr(buf, "AGGREGATE SUM", 0);
+        break;
+    case MIN:
+        rc = cr_appendstr(buf, "AGGREGATE MIN", 0);
+        break;
+    case MAX:
+        rc = cr_appendstr(buf, "AGGREGATE MAX", 0);
+        break;
+    case NONE:; /* avoiding compiler warning */
     }
     if (rc != 0)
         return rc;
@@ -1567,21 +1762,20 @@ static int cr_zstore(REDIS rhnd, int inter, const char *destkey, int keyc, const
 }
 
 int credis_zinterstore(REDIS rhnd, const char *destkey, int keyc, const char **keyv,
-    const int *weightv, REDIS_AGGREGATE aggregate)
+                       const int *weightv, REDIS_AGGREGATE aggregate)
 {
     return cr_zstore(rhnd, 1, destkey, keyc, keyv, weightv, aggregate);
 }
 
 int credis_zunionstore(REDIS rhnd, const char *destkey, int keyc, const char **keyv,
-    const int *weightv, REDIS_AGGREGATE aggregate)
+                       const int *weightv, REDIS_AGGREGATE aggregate)
 {
     return cr_zstore(rhnd, 0, destkey, keyc, keyv, weightv, aggregate);
 }
-
 int credis_hset(REDIS rhnd, const char *name, const char *key, const char *val)
 {
     return cr_sendfandreceive(rhnd, CR_INLINE, "HSET %s %s %s\r\n",
-        name, key, val);
+                              name, key, val);
 }
 
 int credis_hget(REDIS rhnd, const char *name, const char *key, char **val)
@@ -1590,26 +1784,6 @@ int credis_hget(REDIS rhnd, const char *name, const char *key, char **val)
 
     if (rc == 0 && (*val = rhnd->reply.bulk) == NULL)
         return -1;
-
-    return rc;
-}
-
-int credis_hdel(REDIS rhnd, const char *name, const char *key)
-{
-    int rc = cr_sendfandreceive(rhnd, CR_INT, "HDEL %s %s\r\n", name, key);
-
-    if (rc == 0)
-        rc = rhnd->reply.integer;
-
-    return rc;
-}
-
-int credis_hlen(REDIS rhnd, const char *name)
-{
-    int rc = cr_sendfandreceive(rhnd, CR_INT, "HLEN %s\r\n", name);
-
-    if (rc == 0)
-        rc = rhnd->reply.integer;
 
     return rc;
 }
