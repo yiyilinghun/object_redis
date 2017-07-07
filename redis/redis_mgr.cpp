@@ -1,4 +1,5 @@
-﻿#include "redis_mgr.h"
+﻿#include "PCH.h"
+#include "redis_mgr.h"
 
 msRedisMgr::msRedisMgr(const Char *xHost, Int32 xPort, Int32 xDBIndex, Int32 xTimeout, const Char *xPassword)
     : m_Host(xHost), m_Port(xPort)
@@ -107,7 +108,7 @@ Int32 msRedisMgr::HashSetList(mstr xHashName, std::vector<mstr>& xKeys, std::vec
         msAssertLog("xKeys.size() != xValues.size()");
         return -1;
     }
-    for (int i = 0; i < xKeys.size(); i++)
+    for (TSIZE i = 0; i < xKeys.size(); i++)
     {
         xBuff += " " + xKeys[i];
         xBuff += R"( ")" + xValues[i] + R"(")";

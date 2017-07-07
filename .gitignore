@@ -1,3 +1,9 @@
 build
 x64
 .vs
+Debug/
+object_redis_win.opensdf
+object_redis_win.sdf
+object_redis_win.v12.suo
+PCH.h
+

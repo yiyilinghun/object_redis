@@ -9,7 +9,12 @@
 #include <chrono>
 #include <iomanip>
 #include <vector>
-
+#include <functional>
+#include <list>
+#include <queue>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
 #include <stdarg.h>
 
 typedef char Char;
@@ -18,7 +23,7 @@ typedef unsigned char Byte;
 typedef signed short Int16;
 typedef unsigned short Unt16;
 
-typedef signed int Int32;
+typedef int Int32;
 typedef unsigned int Unt32;
 
 #ifdef WIN
@@ -29,16 +34,18 @@ typedef signed long long Int64;
 typedef unsigned long long Unt64;
 #endif
 
-typedef Int32 Boolean;
-#define True 1
-#define False 0
+typedef bool Boolean;
+#define True true
+#define False false
 
 typedef float Single;
 typedef double Double;
 
-typedef Unt16 WORD;
-typedef Unt32 DWORD;
-typedef Unt64 QWORD;
+typedef Unt16   WORD;
+typedef unsigned long   DWORD;
+typedef Unt64   QWORD;
+typedef size_t  TSIZE;
+
 
 typedef void *IntPtr;
 
@@ -59,9 +66,24 @@ typedef std::string u8str;
 #define INVALID_VALUE       (-1)
 #define INVALID_DVALUE      (DWORD)(-1)
 #define INVALID_PTR         (IntPtr)(-1)
+#define var                 auto
 
 #define msAssertLog(str, ...) ((_AssertLog(__FILE__, __LINE__, __FUNCTION__, "", str, ##__VA_ARGS__)))
 void _AssertLog(const Char *file, DWORD line, const Char *func, const Char *expr, const Char *info, ...);
+
+
+#ifdef WIN
+#define ZH_CN "zh-CN"
+//#if _MSC_VER > 1900
+//#define U8(str) u8##str
+//#else
+#define U8(str) msStrAssist::m2u8(str)
+//#endif
+#else
+#define ZH_CN "zh_CN.GB18030"
+#define U8(str) u8##str
+#endif
+
 
 class msStrAssist
 {
@@ -80,24 +102,86 @@ public:
 
     static mstr m2u8(mstr& xMstr)
     {
-        //if (std::codecvt_base::ok == res)
-        //{
-        //    std::wstring_convert<std::codecvt_utf8<char>> cutf8;
-        //    return cutf8.to_bytes(std::wstring(buff.data(), pwszNext));
-        //}
-        //std::codecvt_utf8
-        //mstr xBuff;
-        //xBuff.resize(sizeof(xT));
-        //*((T*)(xBuff.data())) = xT;
+        std::vector<wchar_t> buff(xMstr.size());
+        std::locale loc(ZH_CN);
+        wchar_t* pwszNext = nullptr;
+        const char* pszNext = nullptr;
+        mbstate_t state = {};
+        int res = std::use_facet<std::codecvt<wchar_t, char, mbstate_t> >
+            (loc).in(state,
+            xMstr.data(), xMstr.data() + xMstr.size(), pszNext,
+            buff.data(), buff.data() + buff.size(), pwszNext);
+
+        if (std::codecvt_base::ok == res)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>> cutf8;
+            return cutf8.to_bytes(std::wstring(buff.data(), pwszNext));
+        }
+        return xMstr;
+    }
+
+    static mstr m2u8(mstr&& xMstr)
+    {
+        std::vector<wchar_t> buff(xMstr.size());
+        std::locale loc(ZH_CN);
+        wchar_t* pwszNext = nullptr;
+        const char* pszNext = nullptr;
+        mbstate_t state = {};
+        int res = std::use_facet<std::codecvt<wchar_t, char, mbstate_t> >
+            (loc).in(state,
+            xMstr.data(), xMstr.data() + xMstr.size(), pszNext,
+            buff.data(), buff.data() + buff.size(), pwszNext);
+
+        if (std::codecvt_base::ok == res)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>> cutf8;
+            return cutf8.to_bytes(std::wstring(buff.data(), pwszNext));
+        }
         return xMstr;
     }
 
     static mstr u82m(mstr& xU8str)
     {
-        //mstr xBuff;
-        //xBuff.resize(sizeof(xT));
-        //*((T*)(xBuff.data())) = xT;
-        return xU8str;
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> cutf8;
+        std::wstring wTemp = cutf8.from_bytes(xU8str);
+        std::locale loc(ZH_CN);
+        const wchar_t* pwszNext = nullptr;
+        char* pszNext = nullptr;
+        mbstate_t state = {};
+
+        std::vector<char> buff(wTemp.size() * 2);
+        int res = std::use_facet<std::codecvt<wchar_t, char, mbstate_t> >
+            (loc).out(state,
+            wTemp.data(), wTemp.data() + wTemp.size(), pwszNext,
+            buff.data(), buff.data() + buff.size(), pszNext);
+
+        if (std::codecvt_base::ok == res)
+        {
+            return std::string(buff.data(), pszNext);
+        }
+        return "";
+    }
+
+    static mstr u82m(mstr&& xU8str)
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> cutf8;
+        std::wstring wTemp = cutf8.from_bytes(xU8str);
+        std::locale loc(ZH_CN);
+        const wchar_t* pwszNext = nullptr;
+        char* pszNext = nullptr;
+        mbstate_t state = {};
+
+        std::vector<char> buff(wTemp.size() * 2);
+        int res = std::use_facet<std::codecvt<wchar_t, char, mbstate_t> >
+            (loc).out(state,
+            wTemp.data(), wTemp.data() + wTemp.size(), pwszNext,
+            buff.data(), buff.data() + buff.size(), pszNext);
+
+        if (std::codecvt_base::ok == res)
+        {
+            return std::string(buff.data(), pszNext);
+        }
+        return "";
     }
 
     template <typename T>
